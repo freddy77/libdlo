@@ -3,8 +3,12 @@
 
 AC_PREREQ([2.63])
 AC_INIT([libdlo], [1.0.0], [libdlo@displaylink.com])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign dist-bzip2])
 AC_CONFIG_SRCDIR([src/dlo_grfx.c])
+AC_USE_SYSTEM_EXTENSIONS
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
+AC_PROG_LIBTOOL
 
 # Checks for programs.
 AC_PROG_CC
@@ -35,3 +39,20 @@ AC_CONFIG_FILES([Makefile
                  test/test1/Makefile
                  test/test1/src/Makefile])
 AC_OUTPUT
+AC_MSG_RESULT([
+	libdlo $VERSION
+	========
+	
+	prefix:			${prefix}
+	exec_prefix:		${exec_prefix}
+	libdir_name:		${libdir_name}
+	mandir:			${mandir}
+	includedir:		${includedir}
+						
+	compiler:		${CC}
+	cflags:			${CFLAGS}
+	ldflags:		${LDFLAGS}
+								
+	xsltproc:		${XSLTPROC}
+])
+											
