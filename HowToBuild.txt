@@ -1,0 +1,362 @@
+
+Build environment for the DisplayLink Open Source Software (libdlo)
+===================================================================
+
+This short document explains the layout of the libdlo build environment, the
+prerequisites, how to build the main demonstration library (libdlo) and some
+notes about specific issues which may be found on various platforms.
+
+
+LAYOUT
+------
+
+This build structure in intended to function on a wide range of platforms and
+will build for a broad selection of hardware targets. It has been tested on a
+number of host build systems, including but not limited to:
+
+ * Fedora Linux (10)
+ * Debian Linux (4 and 5)
+ * SuSE Linux (9.2)
+ * Ubuntu Linux (8.04 and 8.10)
+ * CentOS Linux (5.2)
+ * Mac OS X (Leopard)
+
+The build structure can include builds for multiple platforms
+simultaneously. It does this by separating the source code from any
+intermediate object code and built binaries. By default, the MACHTYPE
+environment variable is used as the name of the target platform but this can
+easily be overridden.
+
+When a component, such as libdlo is built, a directory structure is created
+within that component which will contain lists of dependencies, objects and
+binaries, e.g.
+
+  lib/libdlo/build/i686-suse-linux/
+
+Note: one exception to the above is the third-party libraries such as libusb
+which do not normally support this method of building (they simply lump all
+source and binaries into the same directory). These need to be cleaned
+between each build for a new target.
+
+The root level of the build structure contains the following files and
+directories:
+
+  docs        - contains general libdlo build information
+  fixperms.sh - script to fix up permissions of files in the build
+  lib         - contains all of the libraries and sources
+  Makefile    - the main build Makefile
+  makefiles   - a collection of submakefiles
+  mkall.sh    - script which builds all of the libdlo components
+  mkclean.sh  - script which cleans all of the libdlo components
+  test        - contains libdlo test programs and their source
+
+The lib directory contains the source code to libdlo itself and any
+associated third party libraries which it uses, currently only libusb. The
+third party libraries are included unmodified from their public released
+version - as such, they do not necessarily conform to the conventions of the
+libdlo build as a whole.
+
+The main Makefile includes a list of the libraries which comprise the libdlo
+build structure, along with their locations in the build. It also includes a
+list of test programs and their locations. If you add a new library or test
+program, this file should be updated.
+
+Note: if you add a library to the build, you will also need to modify the
+submakefile:
+
+  makefiles/common.mk
+
+to tell the build where to find the library binary (the .a file) when that
+component has built as well as adding the library directory to the global
+include path (INCLUDES) within that file.
+
+A libdlo component, such as libdlo or a test program, is structured as
+follows:
+
+  Makefile    - the submakefile for that component
+  mkclean.sh  - script to clean the component
+  mklib.sh  or  mktest.sh - script to build the component
+  build       - directory of binaries created by build process
+  include     - option directory containing header files
+  src         - source directory structure (may include nested subdirs)
+
+The src directory (and any nested subdirectories) must contain a submakefile
+called:
+
+  module.mk
+
+which simply includes a list of the source files in that directory. This
+allows other files to be placed in there which will not be included in the
+build (such as documentation, or anything else).
+
+For more information, simply take a look at the files and components
+themselves; they have comments throughout.
+
+
+PRE-REQUISITES
+--------------
+
+This build system is primarily aimed at flavours of Linux and UNIX. However,
+it should be reasonably straight-forward to adapt it to function on any
+platform which supports the GCC toolchain.
+
+It makes heavy use of some advanced features of GNU Make so may require a
+little more work to port it to a platform which does not support the GCC
+toolchain, but that should still be possible.
+
+The libdlo sources are self-documenting. You can use the Doxygen tool to
+generate or update this set of documentation by running the
+lib/libdlo/mkdox.sh script.
+
+Finally, the libdlo assumes the presence of some fairly standard command line
+tools and commands such as:
+
+  * echo
+  * mkdir
+  * rm
+  * sed
+
+although these can be modified to use equivalent commands/tools on other
+platforms.
+
+
+PACKAGES
+--------
+
+The following operating systems have been tested with the libdlo build and these
+packages have been identified as being required (those marked with a * are
+the minimal packages with others that should be pulled in as dependencies).
+
+Ubuntu 8.10 requires the following additional packages to be installed:
+
+* g++
+  g++-4.3
+  libstdc++6-4.3-dev
+
+Debian 5 requires the following additional packages to be installed:
+
+* make 3.81-5
+* gcc
+  binutils
+  gcc-4.3
+  libc6-dev
+  libgomp1
+  linux-libc-dev
+* g++
+  g++-4.3
+  libstdc++6-4.3-dev
+
+Fedora 10 requires the following additional packages to be installed:
+
+* gcc-4.3.2-7
+  binutils-2.18.50.0.9-8
+  glibc-devel-2.9-3
+  glibc-headers-2.9-3
+  kernel-headers-2.6.27.19-170.2.35.fc10
+  libgomp-4.3.2-7
+* gcc-c++-4.3.2-7
+  libstdc++-devel-4.3.2-7
+
+CentOS 5.2 requires the following additional packages to be installed:
+
+* gcc 4.1.2-42.el5
+  glibc-devel 2.5-24.el5_2.2
+  glibc-headers 2.5.24.el5_2.2
+  kernel-headers 2.6.18-92.1.22.el5
+  libgomp 4.1.2-42.el5
+* gcc-c++ 4.1.2-42.el5
+  libstdc++-devel 4.1.2-42.el5
+
+openSuSE 11.1 requires the following additional packages to be installed:
+
+* gcc
+  gcc43
+  glibc-devel
+  linux-kernel-headers
+* gcc-c++
+  gcc43-c++
+  libstdc++43-devel
+
+
+HOW TO BUILD
+------------
+
+In addition to the package information given above, an example of what you
+need to do in order to get a build environment up and running is outlined
+below. This is for an Ubuntu 8.04 distribution but other flavours of Linux
+should work in a similar way:
+
+  * Install GCC using the package manager - you can use the command line or
+    the Synaptic Package Manager which comes with Ubuntu - search for 'gcc'
+    and install it along with any dependencies.
+
+  * Install the 'build-essential' package
+
+  * Install the 'doxygen' package - used only to generate documentation
+
+  * Install the 'graphviz' package - used by Doxygen to generate images
+
+The libdlo can be installed somewhere (e.g. in your home directory) in a way
+which does not modify its internal directory structure. Then follow the
+instructions below to do a build.
+
+Once the build structure is installed into your chosen location and you are
+happy that your GGC installation also works (try "gcc --version" on the
+command line), you should ensure that the build structure extracted from its
+archive with the correct permissions. To assist with this, there is a script
+in the root of the build which should be run:
+
+  # ./fixperms.sh
+
+You should only need to run this once. If it's not executable for some
+reason, you will need to make it so with:
+
+  # chmod u+x fixperms.sh
+
+Next, you need to create a small submakefile for the target platform that you
+are building for. Normally, this will be the same as the build machine while
+you are setting up the build process. If you look inside:
+
+  makefiles/target/
+
+you will find a selection of submakefiles which have already been created.
+You need to ensure that there is one which matches your machine type. Type:
+
+  # echo $MACHTYPE
+
+to find out what this is. If you don't have this environment variable set up,
+just pick a name that seems about right (this can be one of the ones already
+used), e.g.
+
+  i386-redhat-linux-gnu
+  i486-pc-linux-gnu
+  i586-suse-linux
+  i686-suse-linux
+
+then copy an existing submakefile using your MACHTYPE, e.g.
+
+  # cd makefiles/target
+  # cp i686-suse-linux.mk $MACHTYPE.mk
+  # cd ../..
+
+or if don't have a MACHTYPE environment variable and you've opted to use one
+of the pre-existing ones, you need to edit the file:
+
+  mkall.sh
+
+to have a hard-wired MACHTYPE rather than getting from the environment
+variable.
+
+Note: to build a debug version or some other libdlo build variant, you can put
+compilation flags into the target makefile, such as:
+
+  CFLAGS += -DDEBUG
+
+Now you should be ready to start the build process. It is a good idea to
+clean the build first:
+
+  # ./mkclean.sh
+
+Then start a build:
+
+  # ./mkall.sh
+
+This will automatically configure and build all of the libdlo components before
+linking them together into the libdlo library binary.
+
+  # ls -l lib/libdlo/build/*/libdlo.a
+
+
+SPECIFIC ISSUES
+---------------
+
+Some operating systems and build environments may throw up specific build
+problems which are due to the multitude of minor differences that can exist
+between systems. Below are a couple of examples of problems which might be
+experienced:
+
+Issue:
+
+  Running a program with libdlo on Linux returns an error such as
+
+    "Error 19 'error sending control message: Operation not permitted'"
+
+Detail:
+
+  Because of the way libdlo interacts with the USB stack, the executable
+  must be run with root privaliges.
+
+Resolution:
+
+  Run the executable as root (or via sudo).
+
+
+Issue:
+
+  libusb fails to build with libtool errors.
+
+Detail:
+
+  One user was finding issues building the libusb part of the libdlo package on
+  Fedora Linux, using libtool version 1.5.16. The error messages included
+  lines stating:
+
+    libtool: compile: unable to infer tagged configuration
+    libtool: compile: specify a tag with '--tag'
+
+Reolution:
+
+  Modify the libusb Makefile definition of LIBTOOL to include:
+
+    --tag=CC
+
+  at the end of the line.
+
+
+Issue:
+
+  test1 fails to link on Mac OS.
+
+Detail:
+
+  The build of the test program fails at the link stage with lots of errors
+  of the form:
+
+    "_IOServiceMatching", referenced from:
+      _usb_setup_iterator in libusb.a(darwin.o)
+
+  culminating with the message:
+
+    ld: symbol(s) not found
+
+Reolution:
+
+  This is due to Mac OS using a slightly unusual style of OS headers and
+  libraries, called Frameworks, which are not included in the linker flags in
+  a normal UNIX/Linux build.
+
+  The work-around is to modify the line in makefiles/exe.mk from:
+
+    @$(LINK.c) -o $@ $^
+
+  to something along the lines of:
+
+    $(LINK.c) -Wl,-framework -Wl,CoreFoundation -Wl,-framework -Wl,IOKit -o $@ $^
+
+--
+DisplayLink Open Source Software (libdlo)
+Copyright (C) 2009, DisplayLink
+www.displaylink.com
+
+This library is free software; you can redistribute it and/or modify it under
+the terms of the GNU Library General Public License as published by the Free
+Software Foundation; LGPL version 2, dated June 1991.
+
+This library is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Library General Public License for more
+details.
+
+You should have received a copy of the GNU Library General Public License
+along with this library; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.

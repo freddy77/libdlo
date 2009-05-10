@@ -1,0 +1,111 @@
+
+libdlo Quick Start Guide
+========================
+
+Introduction
+------------
+
+This guide will help you to get started with the basics of building and
+testing the libdlo software as quickly as possible. Because it skips over
+various details, you may find the odd issue. In that case, you are directed
+to read the more comprehensive instructions in the docs/HowToBuild.txt file.
+
+We will assume that you have unpacked the libdlo sources into your user's home
+directory within an 'dlo' subdirectory (e.g. '~/dlo' or '/home/<user>/dlo').
+This document is therefor ~/dlo/QuickStart.txt.
+
+
+Before you build
+----------------
+
+Before you start building the libdlo, you will need the sources for libusb:
+
+* Install the libusb sources from http://libusb.wiki.sourceforge.net/ into
+  ~/dlo/lib/libusb/ - this software is Open Source (LGPL or BSD licensed)
+
+This should leave you with all of the libusb source files in ~/dlo/lib/libusb
+so that you have files such as ~/dlo/lib/libusb/Makefile (and lots of
+others!). The main build process assumes this location for the sources so
+will fail if they are not there.
+
+
+Building everything
+-------------------
+
+To start the build process from a shell prompt (as the user who's home
+directory the libdlo is installed into):
+
+  $ cd ~/dlo
+  $ make clean
+  $ make all
+
+This will ensure the build environment is cleaned and then build the
+following:
+
+* The libusb library for static linking
+
+* The libdlo (libdlo) library for static linking
+
+* A test program (test1) - statically linked to both libusb and libdlo
+
+Note: sometimes (when rebuilding things) there will be errors from the
+building of one component (e.g. libdlo), perhaps because of a mistake when
+editing a source file, but the build may appear to complete - because the old
+libdlo.a library file was still lying around. In this case, your test
+program will appear not to include the edits you just made.
+
+To avoid this, check carefully through the output of the build process or
+make sure you do each build from clean.
+
+
+Testing the built components
+----------------------------
+
+If the build completed without errors, you should find that the test1
+binary file has been created as ~/dlo/test/test1/build/*/test1. In order
+to do anything useful with this, you will need to plug in a DisplayLink
+device, then:
+
+  $ cd ~/dlo/test/test1    <- test1 assumes location of resources so you
+                              MUST cd to this location for it to work!!
+  $ sudo ./build/*/test1   <- because libusb needs to talk to the usb device,
+                              you MUST run the test program as root - or do
+                              the required chmod magic to the USB device node
+
+If all goes correctly, you should see a series of simple graphical tests
+on the display attached to your DislpayLink device.
+
+
+Building the Doxygen documentation
+----------------------------------
+
+The libdlo library sources are comprehensively documented using the Doxygen
+tool (which you will need to install, along with its dependencies). To build
+this documentation, do the following:
+
+  $ cd ~/dlo/lib/libdlo/doxygen
+
+and the resulting documents will be (re)built, with the index page being:
+
+  ~/dlo/lib/libdlo/docs/html/index.html
+
+
+Common problems
+---------------
+
+A more comprehensive treatment can be found in the docs/HowToBuild.txt file
+but an overview of common problems is given here:
+
+* You haven't got the right build packages installed on your system
+
+* You forgot to install the libusb sources
+
+* Your parent environment doesn't export the MACHTYPE variable
+
+* There is no ~/dlo/makefiles/target makefile for your MACHTYPE
+
+* You didn't cd into the test/test1 directory to run the test harness
+
+* You didn't run the test harness as root
+
+* The DisplayLink device is not assigned to your development VM correctly
