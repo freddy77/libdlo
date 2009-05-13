@@ -26,7 +26,7 @@
 
 #include "sys/time.h"
 #include "libdlo.h"
-#include "../../src/dlo_defs.h"
+#include "../src/dlo_defs.h"
 
 
 /** Default horizontal resolution we will use for tests (pixels).
@@ -894,6 +894,8 @@ int main(int argc, char *argv[])
 
   IGNORE(argc);
   IGNORE(argv);
+
+  printf("test: argv[0]: %s\n",argv[0]);
 
   /* Initialise the random number generator with the microsecond time as a seed */
   srand((unsigned int)now());
