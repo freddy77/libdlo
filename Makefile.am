@@ -8,7 +8,8 @@ EXTRA_DIST = \
 	test/images/test08.bmp \
 	test/images/test16.bmp \
 	test/images/test24.bmp \
-	test/images/test32.bmp
+	test/images/test32.bmp \
+	Guide-v104.pdf
 
 TESTS_ENVIRONMENT = sudo
 TESTS = test/test1
