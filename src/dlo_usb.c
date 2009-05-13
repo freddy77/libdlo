@@ -119,10 +119,7 @@ static dlo_retcode_t usb_error_grab(void);
 
 char *dlo_usb_strerror(void)
 {
-  /* These two are published by libusb */
-  usb_error_type  = USB_ERROR_TYPE_ERRNO;
-  usb_error_errno = usberr;
-  DPRINTF("usb: error lookup %d\n", usberr);
+  //DPRINTF("usb: error lookup %d\n", usberr);
   return usb_err_str;
 }
 
@@ -149,13 +146,13 @@ dlo_retcode_t dlo_usb_final(const dlo_final_t flags)
   return dlo_ok;
 }
 
-
 dlo_retcode_t dlo_usb_enumerate(const bool init)
 {
   struct usb_bus    *bus;
   struct usb_device *dev = NULL;
   int32_t            db  = usb_find_busses();
   int32_t            dd  = usb_find_devices();
+  DPRINTF("usb: dlo_usb_enumerate\n");
 
   /* We should do this even if it looks like there are no changes on the bus because
    * an open() call might call the above functions just to check it's safe to use the
@@ -168,13 +165,124 @@ dlo_retcode_t dlo_usb_enumerate(const bool init)
    */
   IGNORE(db);
   IGNORE(dd);
-
+  
   /* Look for all DisplayLink devices on the USB busses */
-  for (bus = usb_busses; bus; bus = bus->next)
-    for (dev = bus->devices; dev; dev = dev->next)
+  for (bus = usb_get_busses(); bus; bus = bus->next) 
+    for (dev = bus->devices; dev; dev = dev->next) 
       ERR(check_device(dev)); /* Check to see if it's a DisplayLink device. If it is, add to or update the dev_list */
+  
+  return dlo_ok;
+}
+
+
+static dlo_retcode_t check_device(struct usb_device *udev)
+{
+  static char     string[255];
+  usb_dev_handle *uhand    = usb_open(udev);
+  dlo_retcode_t   err      = dlo_ok;
+  dlo_device_t   *dev      = NULL;
+  bool            not_root = false;
+  uint8_t         buf[4];
+  dlo_devtype_t   type;
+
+  //DPRINTF("usb: check: check dev &%X\n", (int)dev);
+
+  if (!uhand) {
+    // this may not be our device. We just can't open it
+    return dlo_ok;
+  }
+  
+  //DPRINTF("usb: check: uhand &%X vendorID &%X\n", (int)uhand, udev->descriptor.idVendor);
+
+  /* Reject devices that don't have the DisplayLink VendorID */
+  if (udev->descriptor.idVendor != VENDORID_DISPLAYLINK)
+  {
+    UERR(usb_close(uhand));
+    return dlo_ok;
+  }
+  //DPRINTF("usb: check: get type\n");
+
+  /* Ask the device for some status information */
+  not_root = true; /* Special case error handling here */
+  UERR_GOTO(usb_control_msg(/* handle */      uhand,
+                            /* requestType */ USB_ENDPOINT_IN | USB_TYPE_VENDOR,
+                            /* request */     NR_USB_REQUEST_STATUS_DW,
+                            /* value */       0,
+                            /* index */       0,
+                            /* bytes */       (char *)buf,
+                            /* size */        sizeof(buf),
+                            /* timeout */     ID_TIMEOUT));
+  not_root = false; /* Back to normal error handling */
+  //DPRINTF("usb: check: type buf[3] = &%X\n", buf[3]);
+
+  /* Determine what type of device we are connected to */
+  switch ((buf[3] >> 4) & 0xF)
+  {
+    case dlo_dev_base:
+      type = dlo_dev_base;
+      break;
+    case dlo_dev_alex:
+      type = dlo_dev_alex;
+      break;
+    default:
+      if (buf[3] == dlo_dev_ollie)
+        type = dlo_dev_ollie;
+      else
+        type = dlo_dev_unknown;
+  }
+
+  /* Read the device serial number as a string */
+  UERR_GOTO(usb_get_string_simple(uhand, udev->descriptor.iSerialNumber, string, sizeof(string)));
+  //DPRINTF("usb: check: type &%X serial '%s'\n", (int)type, string);
+
+  /* See if this device is already in our device list */
+  dev = dlo_device_lookup(string);
+  if (dev)
+  {
+    /* Use this opportunity to update the USB device structure pointer, just in
+     * case it has moved.
+     */
+    dev->cnct->udev = udev;
+    //DPRINTF("usb: check: already in list\n");
+  }
+  else
+  {
+    /* Add a new device to the device list */
+    //DPRINTF("usb: check: create new device\n");
+    dev = dlo_new_device(type, string);
+    NERR_GOTO(dev);
+
+    /* It's not. Create and initialise a new list node for the device */
+    dev->cnct = (dlo_usb_dev_t *)dlo_malloc(sizeof(dlo_usb_dev_t));
+    NERR_GOTO(dev->cnct);
+    dev->cnct->udev = udev;
+    dev->cnct->uhand = NULL;
+  }
+  //DPRINTF("usb: check: dlpp node &%X\n", (int)dev);
+
+  /* Close our temporary handle for the device. If this errors, we'll have a duff entry in
+   * the device list but at least the list integrity will be OK.
+   */
+  UERR_GOTO(usb_close(uhand));
 
   return dlo_ok;
+
+error:
+  /* Free our dev->cnct USB information structure */
+  if (dev->cnct)
+    dlo_free(dev->cnct);
+  dev->cnct = NULL;
+
+  /* Close our temporary handle for the device */
+  (void) usb_close(uhand);
+
+  /* If the executable wasn't run as root, this is where it normally falls over.
+   * So we'll special case that particular error to help indicate this problem.
+   */
+  if (not_root)
+    return dlo_err_not_root;
+
+  return err;
 }
 
 
@@ -182,6 +290,7 @@ dlo_retcode_t dlo_usb_open(dlo_device_t * const dev)
 {
   dlo_retcode_t   err;
   usb_dev_handle *uhand;
+  int             usb_configuration;
   int32_t         db = usb_find_busses();
   int32_t         dd = usb_find_devices();
 
@@ -201,9 +310,19 @@ dlo_retcode_t dlo_usb_open(dlo_device_t * const dev)
 
   /* Establish the connection with the device */
   //DPRINTF("usb: open: setting config...\n");
+
+  /* set configuration fails on composite devices, 
+   * such as 1st gen HP USB 2.0 docks.
+   * With libusb 1.0, we could at least only set
+   * configuration when necessary, but only partial 
+   * mitigation. Need full solution.
+   */
+  //usb_configuration = usb_get_configuration(uhand);
+  //if (usb_configuration != 1) 
   UERR(usb_set_configuration(uhand, 1));
 
   //DPRINTF("usb: open: claiming iface...\n");
+  // TODO: shouldn't assume iface 0
   UERR(usb_claim_interface(uhand, 0));
 
   /* Mark the device as claimed */
@@ -377,114 +496,6 @@ static dlo_retcode_t usb_error_grab(void)
   return dlo_err_usb;
 }
 
-
-static dlo_retcode_t check_device(struct usb_device *udev)
-{
-  static char     string[255];
-  usb_dev_handle *uhand    = usb_open(udev);
-  dlo_retcode_t   err      = dlo_ok;
-  dlo_device_t   *dev      = NULL;
-  bool            not_root = false;
-  uint8_t         buf[4];
-  dlo_devtype_t   type;
-
-  //DPRINTF("usb: check: check dev &%X\n", (int)dev);
-
-  if (!uhand)
-    return dlo_err_open;
-
-  //DPRINTF("usb: check: uhand &%X vendorID &%X\n", (int)uhand, udev->descriptor.idVendor);
-
-  /* Reject devices that don't have the DisplayLink VendorID */
-  if (udev->descriptor.idVendor != VENDORID_DISPLAYLINK)
-  {
-    UERR(usb_close(uhand));
-    return dlo_ok;
-  }
-  //DPRINTF("usb: check: get type\n");
-
-  /* Ask the device for some status information */
-  not_root = true; /* Special case error handling here */
-  UERR_GOTO(usb_control_msg(/* handle */      uhand,
-                            /* requestType */ USB_ENDPOINT_IN | USB_TYPE_VENDOR,
-                            /* request */     NR_USB_REQUEST_STATUS_DW,
-                            /* value */       0,
-                            /* index */       0,
-                            /* bytes */       (char *)buf,
-                            /* size */        sizeof(buf),
-                            /* timeout */     ID_TIMEOUT));
-  not_root = false; /* Back to normal error handling */
-  //DPRINTF("usb: check: type buf[3] = &%X\n", buf[3]);
-
-  /* Determine what type of device we are connected to */
-  switch ((buf[3] >> 4) & 0xF)
-  {
-    case dlo_dev_base:
-      type = dlo_dev_base;
-      break;
-    case dlo_dev_alex:
-      type = dlo_dev_alex;
-      break;
-    default:
-      if (buf[3] == dlo_dev_ollie)
-        type = dlo_dev_ollie;
-      else
-        type = dlo_dev_unknown;
-  }
-
-  /* Read the device serial number as a string */
-  UERR_GOTO(usb_get_string_simple(uhand, udev->descriptor.iSerialNumber, string, sizeof(string)));
-  //DPRINTF("usb: check: type &%X serial '%s'\n", (int)type, string);
-
-  /* See if this device is already in our device list */
-  dev = dlo_device_lookup(string);
-  if (dev)
-  {
-    /* Use this opportunity to update the USB device structure pointer, just in
-     * case it has moved.
-     */
-    dev->cnct->udev = udev;
-    //DPRINTF("usb: check: already in list\n");
-  }
-  else
-  {
-    /* Add a new device to the device list */
-    //DPRINTF("usb: check: create new device\n");
-    dev = dlo_new_device(type, string);
-    NERR_GOTO(dev);
-
-    /* It's not. Create and initialise a new list node for the device */
-    dev->cnct = (dlo_usb_dev_t *)dlo_malloc(sizeof(dlo_usb_dev_t));
-    NERR_GOTO(dev->cnct);
-    dev->cnct->udev = udev;
-    dev->cnct->uhand = NULL;
-  }
-  //DPRINTF("usb: check: dlpp node &%X\n", (int)dev);
-
-  /* Close our temporary handle for the device. If this errors, we'll have a duff entry in
-   * the device list but at least the list integrity will be OK.
-   */
-  UERR_GOTO(usb_close(uhand));
-
-  return dlo_ok;
-
-error:
-  /* Free our dev->cnct USB information structure */
-  if (dev->cnct)
-    dlo_free(dev->cnct);
-  dev->cnct = NULL;
-
-  /* Close our temporary handle for the device */
-  (void) usb_close(uhand);
-
-  /* If the executable wasn't run as root, this is where it normally falls over.
-   * So we'll special case that particular error to help indicate this problem.
-   */
-  if (not_root)
-    return dlo_err_not_root;
-
-  return err;
-}
 
 
 static dlo_retcode_t read_edid(dlo_device_t * const dev, usb_dev_handle *uhand)

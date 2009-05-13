@@ -26,7 +26,7 @@
 
 #include "sys/time.h"
 #include "libdlo.h"
-#include "dlo_defs.h"
+#include "../../src/dlo_defs.h"
 
 
 /** Default horizontal resolution we will use for tests (pixels).
@@ -260,6 +260,8 @@ static dlo_retcode_t basic_grfx_test(const dlo_dev_t uid)
   mode.view.base   = 0;
   mode.refresh     = SCREEN_RATE;
   ERR(dlo_set_mode(uid, &mode));
+  wait_ms(now(), 1000);
+      
 
   /* Read current mode information */
   mode_info = dlo_get_mode(uid);
@@ -848,7 +850,8 @@ static dlo_retcode_t bmp_clip_test(const dlo_dev_t uid)
   mode.view.base   = view[1].base;
   mode.refresh     = 0;
   ERR_GOTO(dlo_set_mode(uid, &mode));
-
+  wait_ms(now(), 1000);
+    
   /* Switch to third bank */
   wait_ms(now(), 2000);
   mode.view.width  = view[2].width;
@@ -857,6 +860,7 @@ static dlo_retcode_t bmp_clip_test(const dlo_dev_t uid)
   mode.view.base   = view[2].base;
   mode.refresh     = 0;
   ERR_GOTO(dlo_set_mode(uid, &mode));
+  wait_ms(now(), 1000);
 
   /* Switch to middle bank */
   wait_ms(now(), 2000);
@@ -866,6 +870,7 @@ static dlo_retcode_t bmp_clip_test(const dlo_dev_t uid)
   mode.view.base   = view[1].base;
   mode.refresh     = 0;
   ERR_GOTO(dlo_set_mode(uid, &mode));
+  wait_ms(now(), 1000);
 
   /* Discard the bitmap */
   free(bmp);
@@ -923,6 +928,8 @@ int main(int argc, char *argv[])
 
     printf("test: release &%X...\n", (uintptr_t)uid);
     ERR_GOTO(dlo_release_device(uid));
+  } else {
+    printf("test: no DisplayLink devices found\n");
   }
 
   /* Finalise libdlo, free up resources */

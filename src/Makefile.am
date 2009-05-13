@@ -19,18 +19,7 @@ libdlo_la_SOURCES = \
 	dlo_usb.c  \
 	libdlo.c
 
-libdlo_la_LDFLAGS = \
-	-version-info $(LIBDLO_LT_CURRENT):$(LIBDLO_LT_REVISION):$(LIBDLO_LT_AGE) \
-	-export-symbols exported_symbols
-
-pkgconfigdir = $(prefix)/$(libdir_name)/pkgconfig
-pkgconfig_DATA = libdlo.pc
-
-EXTRA_DIST = \
-	exported_symbols
-
-# keep autotools from complaining there is no NEWS file
-AUTOMAKE_OPTIONS = foreign
-
-ACLOCAL_AMFLAGS = -I m4
+# here in the early use of the library, set DEBUG on to get better runtime info
+libdlo_la_CFLAGS = -DDEBUG
+libdlo_la_LDFLAGS = -lusb
 

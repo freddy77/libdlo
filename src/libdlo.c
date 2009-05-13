@@ -331,7 +331,7 @@ dlo_devlist_t *dlo_enumerate_devices(void)
    * reason, after any error, we throw away all unclaimed devices from the devlist to try to
    * minimise the chances.
    */
-  // DPRINTF("dlo: enum: enumerating USB devices\n");
+  //DPRINTF("dlo: enum: enumerating USB devices\n");
   ERR_GOTO(dlo_usb_enumerate(false));
 
   /* Remove all devices which weren't updated or added during this enumeration and
@@ -427,6 +427,8 @@ dlo_dev_t dlo_claim_device(const dlo_dev_t uid, const dlo_claim_t flags, const u
   err = dlo_usb_open(dev);
   while (err == dlo_err_reenum)
   {
+    DPRINTF("dlo_usb_open failed with dlo_err_reenum. Retry\n");
+
     /* If the USB bus devices have changed, do the enumeration again */
     dlo_devlist_t *out = dlo_enumerate_devices();
 
@@ -473,19 +475,23 @@ dlo_dev_t dlo_claim_first_device(const dlo_claim_t flags, const uint32_t timeout
 
   /* Look for a DisplayLink device to connect to - note the first one which is unclaimed */
   node = dlo_enumerate_devices();
+  
+  // dlo_enumerate_devices allocates memory for each node, which we must free
   while (node)
   {
     dlo_device_t *dev = (dlo_device_t *)node->dev.uid;
 
     if (!uid && !dev->claimed)
-      uid = node->dev.uid;
+    {
+      uid = dlo_claim_device(node->dev.uid, flags, timeout);
+    }
 
-    /* Free this list node and move on to the next one */
+    /* If we haven't claimed a device, move on to the next one */
     next = node->next;
     dlo_free(node);
     node = next;
   }
-  return uid ? dlo_claim_device(uid, flags, timeout) : (dlo_dev_t)0;
+  return uid;
 }
 
 
@@ -723,11 +729,11 @@ dlo_device_t *dlo_device_lookup(const char * const serial)
 {
   dlo_device_t *dev = dev_list;
 
-  DPRINTF("dlo: lookup: '%s' dev_list &%X\n", serial, (int)dev_list);
+  //DPRINTF("dlo: lookup: '%s' dev_list &%X\n", serial, (int)dev_list);
 
   while (dev)
   {
-    DPRINTF("dlo: lookup: dev &%X serial '%s'\n", (int)dev, dev->serial);
+    //DPRINTF("dlo: lookup: dev &%X serial '%s'\n", (int)dev, dev->serial);
     if (0 == strcmp(dev->serial, serial))
     {
       dev->check = check_state;
