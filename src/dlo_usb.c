@@ -289,6 +289,7 @@ dlo_retcode_t dlo_usb_open(dlo_device_t * const dev)
 {
   dlo_retcode_t   err;
   usb_dev_handle *uhand;
+  char*		 driver_name;
   int             usb_configuration;
   int32_t         db = usb_find_busses();
   int32_t         dd = usb_find_devices();
@@ -310,11 +311,26 @@ dlo_retcode_t dlo_usb_open(dlo_device_t * const dev)
   /* Establish the connection with the device */
   //DPRINTF("usb: open: setting config...\n");
 
-  /* set configuration fails on composite devices, 
-   * such as 1st gen HP USB 2.0 docks.
-   * With libusb 1.0, we could at least only set
-   * configuration when necessary, but only partial 
-   * mitigation. Need full solution.
+  /*
+   * Because some displaylink devices may report 
+   * a class code (like HID or MSC) that gets
+   * matched by a kernel driver, must detach
+   * those drivers before libusb can successfully
+   * set configuration or talk to those devices
+   * unfortunately, this call returns error
+   * even if successful
+   /
+  driver_name = dlo_malloc(128);
+  if (!usb_get_driver_np(uhand, 0, driver_name, 128))
+  {
+    DPRINTF("usb: driver (%s) already attached to device\n", driver_name);
+    usb_detach_kernel_driver_np(uhand,0);
+  }
+   
+  /* set configuration fails on composite devices. 
+   * We could set configuration
+   * only when necessary, but that's just a partial 
+   * mitigation. TODO: Need fuller solution.
    */
   //usb_configuration = usb_get_configuration(uhand);
   //if (usb_configuration != 1) 
