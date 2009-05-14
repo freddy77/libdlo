@@ -39,7 +39,9 @@ AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 
 # Checks for library functions.
-PKG_CHECK_MODULES(LIBUSB, libusb >= 0.1.12)
+AC_CHECK_LIB(usb,usb_open)
+AC_CHECK_FUNC([usb_get_driver_np],,[AC_MSG_ERROR([Can't find libusb. On ubuntu, try sudo apt-get install libusb-dev])])
+AC_CHECK_FUNC([usb_get_configuration],[AC_MSG_ERROR([libdlo currently uses libusb-0.12 or 0.13. You appear to have 1.0])]) 
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([gettimeofday strchr])
