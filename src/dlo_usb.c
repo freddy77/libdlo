@@ -22,7 +22,6 @@
 
 #include <string.h>
 #include "netinet/in.h"
-#include "error.h"  /* from libusb */
 #include "dlo_defs.h"
 #include "dlo_usb.h"
 #include "dlo_base.h"
