@@ -19,8 +19,7 @@ libdlo_la_SOURCES = \
 	dlo_usb.c  \
 	libdlo.c
 
-# here in the early use of the library, set DEBUG on to get better runtime info
-libdlo_la_CFLAGS = -DDEBUG
+libdlo_la_CFLAGS = 
 libdlo_la_LDFLAGS = \
 	-lusb \
 	-version-info $(LIBDLO_LT_CURRENT):$(LIBDLO_LT_REVISION):$(LIBDLO_LT_AGE)
