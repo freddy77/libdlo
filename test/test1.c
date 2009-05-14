@@ -833,15 +833,6 @@ static dlo_retcode_t bmp_clip_test(const dlo_dev_t uid)
   fbuf = bmp_to_fbuf(bmp);
   NERR_GOTO(fbuf);
 
-  /* Plot lots of bitmaps into the second screen bank */
-  for (i = 0; i < 399; i++)
-  {
-    flags.v_flip = rand() % 2;
-    dot.x        = -fbuf->width  + (rand() % (view[1].width  + fbuf->width));
-    dot.y        = -fbuf->height + (rand() % (view[1].height + fbuf->height));
-    ERR_GOTO(dlo_copy_host_bmp(uid, flags, fbuf, &view[1], &dot));
-  }
-
   /* Switch to middle bank */
   wait_ms(now(), 2000);
   mode.view.width  = view[1].width;
@@ -851,6 +842,15 @@ static dlo_retcode_t bmp_clip_test(const dlo_dev_t uid)
   mode.refresh     = 0;
   ERR_GOTO(dlo_set_mode(uid, &mode));
   wait_ms(now(), 1000);
+
+  /* Plot lots of bitmaps into the second screen bank */
+  for (i = 0; i < 399; i++)
+  {
+    flags.v_flip = rand() % 2;
+    dot.x        = -fbuf->width  + (rand() % (view[1].width  + fbuf->width));
+    dot.y        = -fbuf->height + (rand() % (view[1].height + fbuf->height));
+    ERR_GOTO(dlo_copy_host_bmp(uid, flags, fbuf, &view[1], &dot));
+  }
     
   /* Switch to third bank */
   wait_ms(now(), 2000);
