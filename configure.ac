@@ -17,6 +17,14 @@ AC_PROG_LIBTOOL
 # create LIBTOOLS macros.
 LT_INIT
 
+# See LIBTOOLS on what these mean
+LIBDLO_LT_CURRENT=1
+LIBDLO_LT_REVISION=0
+LIBDLO_LT_AGE=1
+AC_SUBST(LIBDLO_LT_CURRENT)
+AC_SUBST(LIBDLO_LT_REVISION)
+AC_SUBST(LIBDLO_LT_AGE)
+
 # Checks for header files.
 AC_CHECK_HEADERS([stdint.h stdlib.h string.h usb.h])
 

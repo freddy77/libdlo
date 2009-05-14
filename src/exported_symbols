@@ -1,0 +1,14 @@
+dlo_strerror
+dlo_init
+dlo_final
+dlo_lookup_device
+dlo_enumerate_devices
+dlo_claim_device
+dlo_claim_first_device
+dlo_release_device
+dlo_device_info
+dlo_set_mode
+dlo_get_mode
+dlo_fill_rect
+dlo_copy_rect
+dlo_copy_host_bmp
