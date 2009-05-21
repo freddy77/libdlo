@@ -130,6 +130,9 @@
 #include <stdbool.h>
 #include "usb.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if 0
 #define dlo_malloc  my_malloc
@@ -762,5 +765,8 @@ extern dlo_retcode_t dlo_copy_host_bmp(const dlo_dev_t uid, const dlo_bmpflags_t
                                        const dlo_fbuf_t * const fbuf,
                                        const dlo_view_t * const dest_view, const dlo_dot_t * const dest_pos);
 
+#ifdef __cplusplus
+};
+#endif
 
 #endif
