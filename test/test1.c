@@ -25,7 +25,7 @@
 #include <time.h>
 
 #include "sys/time.h"
-#include "libdlo.h"
+#include "../src/libdlo.h"
 #include "../src/dlo_defs.h"
 
 
