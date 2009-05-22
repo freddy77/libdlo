@@ -3,6 +3,8 @@
 *.swp
 *.m4
 .deps/
+.libs/
+config/
 m4/
 autom4te.cache/
 Makefile
