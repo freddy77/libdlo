@@ -9,7 +9,8 @@ EXTRA_DIST = \
 	test/images/test16.bmp \
 	test/images/test24.bmp \
 	test/images/test32.bmp \
-	Guide-v104.pdf
+	Guide-v104.pdf \
+	mkdox.sh
 
 TESTS_ENVIRONMENT = sudo
 TESTS = test/test1
