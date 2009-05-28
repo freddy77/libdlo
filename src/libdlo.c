@@ -467,8 +467,48 @@ error:
 }
 
 
-dlo_dev_t dlo_claim_first_device(const dlo_claim_t flags, const uint32_t timeout)
+static const char* parse_cmdline(int *argc_p, char *argv[])
 {
+  /* Scan the command line looking for --dlo:display.  Return the value found, if
+   * any, else return NULL.  Remove all --dlo:* options from argv.
+   */
+
+  const char *display = NULL;
+  int n;
+  int m = 1;
+
+  if (!argc_p) {
+    return NULL;
+  }
+
+  for (n=1; n<*argc_p; ++n) {
+    const char* arg = argv[n];
+    if (strncmp(arg,"--dlo:",6)==0) {
+      const char* dlo_arg = arg + 6;
+      if (strncmp(dlo_arg,"display=",8)==0) {
+        display = dlo_arg + 8;
+      }
+    } else {
+      argv[m] = arg;
+      ++m;
+    }
+  }
+  *argc_p = m;
+  return display;
+}
+
+dlo_dev_t dlo_claim_default_device(int *argc_p, char *argv[],
+                                   const dlo_claim_t flags, const uint32_t timeout)
+{
+  const char *display = parse_cmdline(argc_p, argv);
+  if (!display) {
+    display = getenv("DLODISPLAY");
+  }
+
+  // For now, assume that display is simply the serial number.  Some thought about
+  // exactly what its format should be is needed.
+  const char *serial = display;
+
   dlo_devlist_t *node;
   dlo_devlist_t *next;
   dlo_dev_t      uid = 0;
@@ -481,7 +521,8 @@ dlo_dev_t dlo_claim_first_device(const dlo_claim_t flags, const uint32_t timeout
   {
     dlo_device_t *dev = (dlo_device_t *)node->dev.uid;
 
-    if (!uid && !dev->claimed)
+    if (!uid && !dev->claimed
+        && (!serial || strcmp(serial,dev->serial)==0))
     {
       uid = dlo_claim_device(node->dev.uid, flags, timeout);
     }

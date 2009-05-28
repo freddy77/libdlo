@@ -604,22 +604,31 @@ extern dlo_devlist_t *dlo_enumerate_devices(void);
 extern dlo_dev_t dlo_claim_device(const dlo_dev_t uid, const dlo_claim_t flags, const uint32_t timeout);
 
 
-/** Claim the first available (unclaimed) device.
+/** Claim the default device.
  *
+ *  @param  argc_p   Pointer to main program's argc.
+ *  @param  argv     Main program's argv.
  *  @param  flags    Flags word describing how the device is to be accessed.
  *  @param  timeout  Timeout in milliseconds (zero for infinite).
  *
  *  @return  Unique ID of the claimed device (or NULL if failed).
  *
- *  This call performs a very similar function to @c dlo_claim_device() except
- *  that it performs the enumeration of connected devices on behalf of the caller
- *  and returns the unique ID of the first available (unclaimed device). This
- *  device is claimed automatically.
+ *  This call enumerates the connected devices and returns the unique ID of the default
+ *  device.  The default device is selected by the DLODISPLAY environment variable or the
+ *  --dlo:display command-line option; if neither is specified the first device found is
+ *  selected.  This selected device is claimed.
  *
- *  If no unclaimed devices are found, or if the claim operation itself fails in
- *  some way, the function will return a device handle of zero.
+ *  If no default device is found, or if the claim operation fails, the function will
+ *  return a device handle of zero.
+ *
+ *  The main program should pass a pointer to argc and argv to this function so that any
+ *  --dlo:display option can be found.  This function will update argc and argv to remove
+ *  any --dlo:* options that it finds, so the main program need not worry about the
+ *  presence of these options in the command line if it calls this function first.
+ *  Pass NULL as argc_p to disable command-line parsing.
  */
-extern dlo_dev_t dlo_claim_first_device(const dlo_claim_t flags, const uint32_t timeout);
+extern dlo_dev_t dlo_claim_default_device(int *argc_p, char *argv[],
+                                          const dlo_claim_t flags, const uint32_t timeout);
 
 
 /** Release the specified device.
