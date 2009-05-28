@@ -57,7 +57,7 @@ AC_MSG_RESULT([
 	
 	prefix:			${prefix}
 	exec_prefix:		${exec_prefix}
-	libdir_name:		${libdir_name}
+	libdir_name:		${libdir}
 	mandir:			${mandir}
 	includedir:		${includedir}
 						
@@ -67,4 +67,4 @@ AC_MSG_RESULT([
 								
 	xsltproc:		${XSLTPROC}
 ])
-											
+

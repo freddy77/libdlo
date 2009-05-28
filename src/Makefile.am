@@ -1,5 +1,5 @@
 
-rootlibdir = $(exec_prefix)/$(libdir_name)
+rootlibdir = $(libdir)
 rootlib_LTLIBRARIES = \
 	libdlo.la
 
