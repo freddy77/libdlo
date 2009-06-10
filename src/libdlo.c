@@ -497,6 +497,35 @@ static const char* parse_cmdline(int *argc_p, char *argv[])
   return display;
 }
 
+
+dlo_dev_t dlo_claim_first_device(const dlo_claim_t flags, const uint32_t timeout)
+{
+  dlo_devlist_t *node;
+  dlo_devlist_t *next;
+  dlo_dev_t      uid = 0;
+
+  /* Look for a DisplayLink device to connect to - note the first one which is unclaimed */
+  node = dlo_enumerate_devices();
+  
+  // dlo_enumerate_devices allocates memory for each node, which we must free
+  while (node)
+  {
+    dlo_device_t *dev = (dlo_device_t *)node->dev.uid;
+
+    if (!uid && !dev->claimed)
+    {
+      uid = dlo_claim_device(node->dev.uid, flags, timeout);
+    }
+
+    /* If we haven't claimed a device, move on to the next one */
+    next = node->next;
+    dlo_free(node);
+    node = next;
+  }
+  return uid;
+}
+
+
 dlo_dev_t dlo_claim_default_device(int *argc_p, char *argv[],
                                    const dlo_claim_t flags, const uint32_t timeout)
 {

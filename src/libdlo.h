@@ -575,6 +575,30 @@ extern dlo_dev_t dlo_lookup_device(struct usb_device *udev);
 extern dlo_devlist_t *dlo_enumerate_devices(void);
 
 
+/** Claim the first available (unclaimed) device.
+ *
+ *  @param  flags    Flags word describing how the device is to be accessed.
+ *  @param  timeout  Timeout in milliseconds (zero for infinite).
+ *
+ *  @return  Unique ID of the claimed device (or NULL if failed).
+ *
+ *  This call performs a very similar function to @c dlo_claim_device() except
+ *  that it performs the enumeration of connected devices on behalf of the caller
+ *  and returns the unique ID of the first available (unclaimed device). This
+ *  device is claimed automatically.
+ *
+ *  Both because users will wish to use specific displays for specific purposes
+ *  And because kernel framebuffer drivers and other device users aren't always
+ *  counted as "claiming" the device, this interface is a bit dangerous.
+ *  For "real" apps, use dlo_claim_default_device.  This API kept for the
+ *  time being to provide an interface that "just works" if any DisplayLink
+ *  device is present. 
+ *
+ *  If no unclaimed devices are found, or if the claim operation itself fails in
+ *  some way, the function will return a device handle of zero.
+ */
+extern dlo_dev_t dlo_claim_first_device(const dlo_claim_t flags, const uint32_t timeout);
+
 /** Claim the specified device.
  *
  *  @param  uid      Unique ID of the device to claim.
