@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.63])
-AC_INIT([libdlo], [0.1.0], [libdlo@displaylink.com])
+AC_INIT([libdlo], [0.1.1], [libdlo@displaylink.com])
 AC_CONFIG_AUX_DIR([config])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign dist-bzip2])
 AC_CONFIG_SRCDIR([src/dlo_grfx.c])
