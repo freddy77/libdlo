@@ -1,4 +1,4 @@
-/** @file dlo_mode.c
+/*
  *
  *  @brief Implementation of the screen mode-related functions.
  *
@@ -144,149 +144,6 @@ typedef struct dlo_mode_data_s
 } dlo_mode_data_t;       /**< A struct @a dlo_mode_data_s. */
 
 
-/** Established timing information, derived from EDID.
- */
-typedef struct est_timing_s
-{
-  uint16_t width;        /**< Width of mode (pixels). */
-  uint16_t height;       /**< Height of mode (pixels). */
-  uint8_t  refresh;      /**< Mode refresh rate (Hz). */
-} est_timing_t;          /**< A struct @a est_timings_s. */
-
-
-/** Vendor/product information.
- */
-typedef struct edid_prod_id_s
-{
-  uint16_t manuf_name;   /**< ID manufacturer code. */
-  uint16_t prod_code;    /**< ID product code. */
-  uint32_t serial_num;   /**< ID serial number. */
-  uint8_t  manuf_wk;     /**< Week of manufacture. */
-  uint8_t  manuf_yr;     /**< Year of manufacture. */
-} edid_prod_id_t;        /**< A struct @a edid_prod_id_s. */
-
-
-/** EDID structure information.
- */
-typedef struct edid_struct_vsn_s
-{
-  uint8_t number;        /**< Version number. */
-  uint8_t revision;      /**< Revision number. */
-} edid_struct_vsn_t;     /**< A struct @a edid_struct_vsn_s. */
-
-
-/** Basic dislpay parameters/features.
- */
-typedef struct edid_basic_params_s
-{
-  uint8_t input_def;     /**< Video input definition. */
-  uint8_t max_horiz_sz;  /**< Maximum horizontal image size (cm). */
-  uint8_t max_vert_sz;   /**< Maximum vertical image size (cm). */
-  float   gamma;         /**< Display transfer characteristic (gamma). */
-  uint8_t features;      /**< Feature support. */
-} edid_basic_params_t;   /**< A struct @a edid_basic_params_s. */
-
-
-/** Colour characteristics.
- */
-typedef struct edid_colours_s
-{
-  uint16_t red_grn_low;  /**< Red/green low bits. */
-  uint16_t blu_wht_low;  /**< Blue/white low bits. */
-  uint16_t red_x;        /**< Red-x (bits 9-2). */
-  uint16_t red_y;        /**< Red-y (bits 9-2). */
-  uint16_t grn_x;        /**< Green-x (bits 9-2). */
-  uint16_t grn_y;        /**< Green-y (bits 9-2). */
-  uint16_t blu_x;        /**< Blue-x (bits 9-2). */
-  uint16_t blu_y;        /**< Blue-y (bits 9-2). */
-  uint16_t wht_x;        /**< White-x (bits 9-2). */
-  uint16_t wht_y;        /**< White-y (bits 9-2). */
-} edid_colours_t;        /**< A struct @a edid_colours_s. */
-
-
-/** Established timings.
- */
-typedef struct edid_est_timings_s
-{
-  uint8_t timings[2];    /**< Bitfields of established timings. */
-  uint8_t resvd;         /**< Manufacturer's reserved timings. */
-} edid_est_timings_t;    /**< A struct @a edid_est_timings_s. */
-
-
-/** Standard timing identification.
- */
-typedef struct edid_std_timing_s
-{
-  uint16_t timing_id[8];  /**< Standard timing identification. */
-} edid_std_timing_t;      /**< A struct @a edid_std_timing_s. */
-
-
-/** Detailed timing description.
- */
-typedef struct edid_detail_s
-{
-  bool     is_detail;        /**< Flag is set to true - the structure is an @a edid_detail_t. */
-  float    pixclk;           /**< Timing parameter. */
-  uint32_t hactl;            /**< Timing parameter. */
-  uint32_t hblankl;          /**< Timing parameter. */
-  uint32_t hactblankh;       /**< Timing parameter. */
-  uint32_t vactl;            /**< Timing parameter. */
-  uint32_t vblankl;          /**< Timing parameter. */
-  uint32_t vactblankh;       /**< Timing parameter. */
-  uint32_t hsyncoffl;        /**< Timing parameter. */
-  uint32_t hsyncwl;          /**< Timing parameter. */
-  uint32_t vsyncoffvsyncwl;  /**< Timing parameter. */
-  uint32_t synch;            /**< Timing parameter. */
-  uint32_t hsizel;           /**< Timing parameter. */
-  uint32_t vsizel;           /**< Timing parameter. */
-  uint32_t hvsizeh;          /**< Timing parameter. */
-  uint8_t  hbord;            /**< Timing parameter. */
-  uint8_t  vbord;            /**< Timing parameter. */
-  uint8_t  flags;            /**< Timing parameter. */
-} edid_detail_t;             /**< A struct @a edid_detail_s. */
-
-
-/** Monitor descriptor.
- */
-typedef struct edid_monitor_desc_s
-{
-  bool    is_detail;     /**< Flag is set to false - the structure is not an @a edid_detail_t. */
-  uint8_t unknown[18];   /**< Contents of block are unknown. */
-} edid_monitor_desc_t;   /**< A struct @a edid_monitor_desc_s. */
-
-
-/** A timing description block may be either a @a edid_detail_t or a @a edid_monitor_desc_t.
- */
-typedef union edid_timing_desc_u
-{
-  edid_detail_t       detail;  /**< Either a detailed timing description. */
-  edid_monitor_desc_t desc;    /**< Or a monitor descriptor. */
-} edid_timing_desc_t;          /**< A struct @a edid_timing_desc_s. */
-
-
-/** An EDID extension block.
- */
-typedef struct edid_ext_block_s
-{
-  uint8_t unknown[128];  /**< Contents of block are unknown. */
-} edid_ext_block_t;      /**< A struct @a edid_ext_block_s. */
-
-
-/** An EDID structure.
- */
-typedef struct edid_format_s
-{
-  edid_prod_id_t      product;      /**< Vendor/product information. */
-  edid_struct_vsn_t   version;      /**< EDID structure information. */
-  edid_basic_params_t basic;        /**< Basic dislpay parameters/features. */
-  edid_colours_t      colours;      /**< Colour characteristics. */
-  edid_est_timings_t  est_timings;  /**< Established timings. */
-  edid_std_timing_t   std_timings;  /**< Standard timing identification. */
-  edid_timing_desc_t  timings[4];   /**< Timing descriptions. */
-  uint8_t             ext_blocks;   /**< Number of extension blocks. */
-} edid_format_t;                    /**< A struct @a edid_format_s. */
-
-
 /* External scope variables ------------------------------------------------------------*/
 
 
@@ -332,6 +189,17 @@ const est_timing_t est_timings[24] =
 /* File-scope function declarations ----------------------------------------------------*/
 
 
+/** Calcualte refresh rate in hertz 
+ *  
+ *  @param did  A parsed, unpacked EDID detailed timing structure
+ *  
+ *  @return refresh rate in hertz
+ */
+inline uint8_t refresh_hz_from_edid(edid_detail_unpacked_t const * edid) {
+  return (uint8_t)(edid->pixelClock10KHz*10000/
+    ((edid->hBlanking + edid->hActive)*(edid->vBlanking + edid->vActive)))+0.5;
+}
+
 /** Append a video register setting command onto the specified char block.
  *
  *  @param  dev  Pointer to @a dlo_device_t structure.
@@ -366,10 +234,17 @@ static bool bad_edid_checksum(const uint8_t * const ptr, const size_t size);
 
 /** Parse an EDID detailed timing descriptor/mode descriptor.
  *
- *  @param  desc  Pointer to descriptor structure to initialise.
- *  @param  ptr   Pointer to base of descriptor in EDID data to parse.
+ *  @param  monitor  Pointer to descriptor structure to initialise.
+ *  @param  ptr      Pointer to base of descriptor in EDID data to parse.
  */
-static void parse_edid_detail_desc(edid_timing_desc_t * const desc, const uint8_t * const ptr);
+static dlo_retcode_t unpack_edid_detailed_timing(edid_detail_unpacked_t * const desc, const uint8_t * const ptr);
+
+/** Set mode based on preferred/default form EDID detailed timing descriptor/mode descriptor.
+ *
+ *  @param  dev      Pointer to @a dlo_device_t structure. 
+ *  @param  timing   Pointer to @a edid_detail_unpacked_t structure.
+ */
+static dlo_retcode_t mode_set_from_edid(dlo_device_t * const dev, edid_detail_unpacked_t *edid, uint32_t base);
 
 
 /** Parse EDID colour characteristics.
@@ -423,7 +298,7 @@ static uint16_t add_supported(dlo_device_t * const dev, uint16_t idx, const uint
  *
  *  @return  Return code, zero for no error.
  */
-static dlo_retcode_t lookup_edid_modes(dlo_device_t * const dev, const edid_format_t * const edid);
+static dlo_retcode_t lookup_edid_modes(dlo_device_t * const dev, const dlo_edid_t * const edid);
 
 
 /** Program the base addresses of the video display in the device.
@@ -526,10 +401,17 @@ dlo_retcode_t dlo_mode_change(dlo_device_t * const dev, const dlo_mode_t * const
   return mode_select(dev, desc, mode);
 }
 
+dlo_retcode_t dlo_mode_set_default(dlo_device_t * const dev, uint32_t base)
+{
+  /* The first timing block is the preferred mode of the monitor */
+  DPRINTF("mode: dlo_mode_set_default (setting monitor preferred mode)\n");
+  return mode_set_from_edid(dev, &dev->edid.timings[0], base);
+}
+
 
 dlo_retcode_t dlo_mode_parse_edid(dlo_device_t * const dev, const uint8_t * const ptr, const size_t size)
 {
-  static edid_format_t edid;
+  dlo_edid_t *edid = &dev->edid;
   uint32_t             i;
 
   /* Copy the header bytes straight into our structure (assumes the structure is correct size!) */
@@ -552,47 +434,47 @@ dlo_retcode_t dlo_mode_parse_edid(dlo_device_t * const dev, const uint8_t * cons
   }
 #endif
 
-  edid.product.manuf_name = LETOHS(RD_S(ptr + 0x08));
-  edid.product.prod_code  = LETOHS(RD_S(ptr + 0x0A));
-  edid.product.serial_num = LETOHL(RD_L(ptr + 0x0C));
-  edid.product.manuf_wk   = RD_B(ptr + 0x10);
-  edid.product.manuf_yr   = RD_B(ptr + 0x11);
+  edid->product.manuf_name = LETOHS(RD_S(ptr + 0x08));
+  edid->product.prod_code  = LETOHS(RD_S(ptr + 0x0A));
+  edid->product.serial_num = LETOHL(RD_L(ptr + 0x0C));
+  edid->product.manuf_wk   = RD_B(ptr + 0x10);
+  edid->product.manuf_yr   = RD_B(ptr + 0x11);
   //DPRINTF("mode: edid: manuf &%X prod &%X serial &%X wk %u yr %u\n",
-  //        edid.product.manuf_name, edid.product.prod_code, edid.product.serial_num,
-  //        edid.product.manuf_wk, edid.product.manuf_yr + 1990);
+  //        edid->product.manuf_name, edid->product.prod_code, edid->product.serial_num,
+  //        edid->product.manuf_wk, edid->product.manuf_yr + 1990);
 
   /* Parse the EDID structure information */
-  edid.version.number   = RD_B(ptr + 0x12);
-  edid.version.revision = RD_B(ptr + 0x13);
-  //DPRINTF("edid: version &%02X revision &%02X\n", edid.version.number, edid.version.revision);
+  edid->version.number   = RD_B(ptr + 0x12);
+  edid->version.revision = RD_B(ptr + 0x13);
+  //DPRINTF("edid: version &%02X revision &%02X\n", edid->version.number, edid->version.revision);
 
   /* Parse the basic dislpay parameters/features */
-  edid.basic.input_def    = RD_B(ptr + 0x14);
-  edid.basic.max_horiz_sz = RD_B(ptr + 0x15);
-  edid.basic.max_vert_sz  = RD_B(ptr + 0x16);
-  edid.basic.gamma        = (100.0 + RD_B(ptr + 0x17)) / 100.0;
-  edid.basic.features     = RD_B(ptr + 0x18);
+  edid->basic.input_def    = RD_B(ptr + 0x14);
+  edid->basic.max_horiz_sz = RD_B(ptr + 0x15);
+  edid->basic.max_vert_sz  = RD_B(ptr + 0x16);
+  edid->basic.gamma        = (100.0 + RD_B(ptr + 0x17)) / 100.0;
+  edid->basic.features     = RD_B(ptr + 0x18);
 
   /* Parse the colour characteristics */
-  parse_edid_colours(&(edid.colours), ptr + 0x19);
+  parse_edid_colours(&(edid->colours), ptr + 0x19);
 
   /* Parse the established timings */
-  edid.est_timings.timings[0] = RD_B(ptr + 0x23);
-  edid.est_timings.timings[1] = RD_B(ptr + 0x24);
-  edid.est_timings.resvd      = RD_B(ptr + 0x25);
+  edid->est_timings.timings[0] = RD_B(ptr + 0x23);
+  edid->est_timings.timings[1] = RD_B(ptr + 0x24);
+  edid->est_timings.resvd      = RD_B(ptr + 0x25);
 
   /* Parse the bits at the end of the EDID structure */
-  edid.ext_blocks = RD_B(ptr + 0x7E);
+  edid->ext_blocks = RD_B(ptr + 0x7E);
 
   /* Parse all of the standard timing identification */
-  for (i = 0; i < sizeof(edid.std_timings.timing_id); i++)
-    edid.std_timings.timing_id[i] = RD_B(ptr + 0x26 + i);
+  for (i = 0; i < sizeof(edid->std_timings.timing_id); i++)
+    edid->std_timings.timing_id[i] = RD_B(ptr + 0x26 + i);
 
-  /* Parse all of the detailed timing descriptions (or monitor descriptors) */
-  for (i = 0; i < 4; i++)
-    parse_edid_detail_desc(&(edid.timings[i]), ptr + 0x36 + (i * 0x12));
-
-  return lookup_edid_modes(dev, &edid);
+  /* Parse all of the detailed timing descriptions (monitor descriptors not supported) */
+  for (i = 0; i < 4; i++) {
+    unpack_edid_detailed_timing(&edid->timings[i], ptr + 0x36 + (i * 0x12));
+  }
+  return lookup_edid_modes(dev, edid);
 }
 
 
@@ -649,9 +531,9 @@ static dlo_modenum_t get_mode_number(dlo_device_t * const dev, const uint16_t wi
   {
     /* Read the mode number from the device's supported modes array */
     num = dev->supported[idx];
-    if (num == DLO_INVALID_MODE)
+    if (num == DLO_INVALID_MODE) {
       break;
-
+    }
     /* This sequence of if statements looks odd, take care if you decide to 'optimise' it! */
     if (dlo_mode_data[num].width != width)
       continue;
@@ -670,6 +552,165 @@ static dlo_modenum_t get_mode_number(dlo_device_t * const dev, const uint16_t wi
   return DLO_INVALID_MODE;
 }
 
+/** Perform lfsr16 encoding of the argument.
+ *
+ *  @param  v  Value to transform.
+ *
+ *  @return  Encoded value.
+ *
+ *  Inefficient computation of a value as encoded by an 16 bit linear feedback
+ *  shift register. Better implementations might use look-up tables or the like
+ *  (which would require around 128KB of RAM).
+ * 
+ *  LFSR isn't actually in the mode registers for encryption purposes
+ * (which is why it doesn't apply to all registers).  It's actually
+ * for convenience on the hardware side, as the registers are used as counters
+ */
+static uint32_t lfsr16(uint32_t v)
+{
+  static uint32_t prev = 0;
+  static uint32_t _v   = 0xFFFF;
+
+  if (v != prev)
+  {
+    _v = 0xFFFF;
+    while (v--)
+      _v = ((_v << 1) | (((_v >> 15) ^ (_v >> 4) ^ (_v >> 2) ^ (_v >> 1)) & 1)) & 0xFFFF;
+    prev = v;
+  }
+  return _v;
+}
+
+inline dlo_retcode_t vreg_big_endian(dlo_device_t * const dev, uint8_t reg, uint16_t val){
+
+  if (IS_BIGENDIAN()) {
+    val = swap_endian_s(val);
+  }
+
+  ERR(vreg(dev, reg, val >> 8));
+  ERR(vreg(dev, reg+1, val & 0xFF));
+
+  return dlo_ok;
+}
+
+inline dlo_retcode_t vreg_little_endian(dlo_device_t * const dev, uint8_t reg, uint16_t val){
+
+
+  if (IS_BIGENDIAN()) {
+    val = swap_endian_s(val);
+  }
+
+  ERR(vreg(dev, reg, val & 0xFF));
+  ERR(vreg(dev, reg+1, val >> 8));
+
+  return dlo_ok;
+}
+
+inline dlo_retcode_t vreg_lfsr16(dlo_device_t * const dev, uint8_t reg, uint16_t val){
+
+  uint16_t lsfr_shifted = lfsr16(val);
+
+  return vreg_big_endian(dev, reg, lsfr_shifted);
+}
+
+static dlo_retcode_t edid_to_vreg_commands(dlo_device_t * const dev, edid_detail_unpacked_t *edid, uint8_t color_depth)
+{
+
+  uint16_t xDisplayStart = edid->hBlanking - edid->hSyncOffset;
+  uint16_t xDisplayEnd = xDisplayStart + edid->hActive;
+  uint16_t yDisplayStart = edid->vBlanking - edid->vSyncOffset;
+  uint16_t yDisplayEnd = yDisplayStart + edid->vActive;
+  uint16_t xEndCount = edid->hActive + edid->hBlanking - 1;
+  uint16_t hSyncStart = 1;
+  uint16_t hSyncEnd = edid->hSyncPulseWidth + 1;
+  uint16_t hPixels = edid->hActive;
+  uint16_t yEndCount = edid->vActive + edid->vBlanking;
+  uint16_t vSyncStart = 0;
+  uint16_t vSyncEnd = edid->vSyncPulseWidth;
+  uint16_t vPixels = edid->vActive;
+  uint16_t pixelClock5KHz = edid->pixelClock10KHz*2;
+
+  if (!(edid->bHSyncPositive)) { SWAP(hSyncStart, hSyncEnd); } 
+  if (!(edid->bVSyncPositive)) { SWAP(vSyncStart, vSyncEnd); }
+
+  DPRINTF("dl_vreg: xDisplayStart:   %u\n", xDisplayStart);
+  DPRINTF("dl_vreg: xDisplayEnd:     %u\n", xDisplayEnd);
+  DPRINTF("dl_vreg: yDisplayStart:   %u\n", yDisplayStart);
+  DPRINTF("dl_vreg: yDisplayEnd:     %u\n", yDisplayEnd);
+  DPRINTF("dl_vreg: xEndCount:       %u\n", xEndCount);
+  DPRINTF("dl_vreg: hSyncStart:      %u\n", hSyncStart);
+  DPRINTF("dl_vreg: hSyncEnd:        %u\n", hSyncEnd);
+  DPRINTF("dl_vreg: hPixels:         %u\n", hPixels);
+  DPRINTF("dl_vreg: yEndCount:       %u\n", yEndCount);
+  DPRINTF("dl_vreg: vSyncStart:      %u\n", vSyncStart);
+  DPRINTF("dl_vreg: vSyncEnd:        %u\n", vSyncEnd);
+  DPRINTF("dl_vreg: vPixels:         %u\n", vPixels); 
+  DPRINTF("dl_vreg: Pixel Clock:     %u KHz\n", pixelClock5KHz * 5);
+
+  /* Begin writing to video registers */
+  //ERR(vreg(dev,               0xFF, 0));
+ 
+  ERR(vreg(dev,               0x00, (color_depth == 16) ? 0 : 1));
+  ERR(vreg_lfsr16(dev,        0x01, xDisplayStart));
+  ERR(vreg_lfsr16(dev,        0x03, xDisplayEnd));
+  ERR(vreg_lfsr16(dev,        0x05, yDisplayStart));
+  ERR(vreg_lfsr16(dev,        0x07, yDisplayEnd)); 
+  ERR(vreg_lfsr16(dev,        0x09, xEndCount)); 
+  ERR(vreg_lfsr16(dev,        0x0B, hSyncStart)); 
+  ERR(vreg_lfsr16(dev,        0x0D, hSyncEnd));
+  ERR(vreg_big_endian(dev,    0x0F, hPixels));
+  ERR(vreg_lfsr16(dev,        0x11, yEndCount));
+  ERR(vreg_lfsr16(dev,        0x13, vSyncStart));
+  ERR(vreg_lfsr16(dev,        0x15, vSyncEnd));
+  ERR(vreg_big_endian(dev,    0x17, vPixels));
+  ERR(vreg_little_endian(dev, 0x1B, pixelClock5KHz));
+
+  /* wake monitor: enable hsync, vsync, and video */
+  ERR(vreg(dev,               0x1F, 0));  
+
+  /* flush register changes (write to reg 0xFF) and final null comand */
+  ERR(vbuf(dev, WRITE_VIDREG_UNLOCK, DSIZEOF(WRITE_VIDREG_UNLOCK)));
+
+  return dlo_ok;
+}
+
+static dlo_retcode_t mode_set_from_edid(dlo_device_t * const dev, edid_detail_unpacked_t *edid, uint32_t base) {
+
+  /* EDID standard for detecting if detailed block is populated */
+  if (edid->pixelClock10KHz == 0)
+    return DLO_INVALID_MODE;
+
+  /* Flush the command buffer */
+  if (dlo_ok != dlo_usb_write(dev))
+    return DLO_INVALID_MODE;
+
+  /* Base address must be aligned to a two byte boundary */
+  if (base & 1)
+    return dlo_err_bad_mode;
+
+  dev->mode.view.base = base;
+  dev->base8          = base + (BYTES_PER_16BPP * edid->hActive * edid->vActive);
+  ERR(set_base(dev, dev->mode.view.base, dev->base8));
+
+  //ERR(dlo_usb_std_chan(dev));
+  ERR(edid_to_vreg_commands(dev, edid, 24));
+
+  /* Flush the command buffer */
+  ERR(dlo_usb_write(dev));
+
+  /* Update the device with the new mode details */
+  dev->mode.view.width = edid->hActive;
+  dev->mode.view.height = edid->vActive;
+  dev->mode.view.bpp = 24;
+  dev->mode.refresh = refresh_hz_from_edid(edid);
+
+  DPRINTF("mode: mode_set_from_edid %ux%u @ %u Hz %u bpp (base &%X base8 &%X)\n",
+          dev->mode.view.width, dev->mode.view.height, dev->mode.refresh, dev->mode.view.bpp,
+          dev->mode.view.base, dev->base8);
+
+  return dlo_ok;
+
+}
 
 static dlo_retcode_t mode_select(dlo_device_t * const dev, const dlo_mode_t * const desc, const dlo_modenum_t mode)
 {
@@ -729,19 +770,16 @@ static uint16_t add_supported(dlo_device_t * const dev, uint16_t idx, const uint
   if (num != DLO_INVALID_MODE)
     dev->supported[idx++] = num;
 
-//  DPRINTF("mode: add_supt: %ux%u @ %u Hz, %u bpp = num %u\n", width, height, refresh, 24, (int)num);
+  //DPRINTF("mode: add_supt: %ux%u @ %u Hz, %u bpp = num %u\n", width, height, refresh, 24, (int)num);
 
   return idx;
 }
 
 
-static dlo_retcode_t lookup_edid_modes(dlo_device_t * const dev, const edid_format_t * const edid)
+static dlo_retcode_t lookup_edid_modes(dlo_device_t * const dev, const dlo_edid_t * const edid)
 {
   uint32_t timings, bit;
   uint32_t idx    = 0;
-
-  /* Clear the native mode information for the device */
-  (void) dlo_memset(&dev->native, 0, sizeof(dlo_mode_t));
 
   /* Add mode numbers for any supported established timing modes */
   timings = edid->est_timings.timings[0] | (edid->est_timings.timings[1] << 8) | (edid->est_timings.resvd << 16);
@@ -749,45 +787,6 @@ static dlo_retcode_t lookup_edid_modes(dlo_device_t * const dev, const edid_form
   {
     if (est_timings[bit].width)
       idx = add_supported(dev, idx, est_timings[bit].width, est_timings[bit].height, est_timings[bit].refresh);
-  }
-
-  /* Add further support from the detailed timing descriptions */
-  for (timings = 0; timings < 4; timings++)
-  {
-    const edid_detail_t * const detail = &(edid->timings[timings].detail);
-
-    if (detail->is_detail)
-    {
-      uint8_t hz;
-
-      for (hz = 50; hz < 100; hz++)
-      {
-        uint32_t prev   = idx;
-        uint32_t width  = detail->hactl + ((detail->hactblankh & 0xF0) << 4);
-        uint32_t height = detail->vactl + ((detail->vactblankh & 0xF0) << 4);
-
-        idx = add_supported(dev, idx, width, height, hz);
-
-        /* Have we added a mode definition for the native resolution reported by the display? */
-        if (idx != prev)
-        {
-          dlo_modenum_t num = dev->supported[prev];
-
-          dev->native.view.base   = 0;
-          dev->native.view.width  = dlo_mode_data[num].width;
-          dev->native.view.height = dlo_mode_data[num].height;
-          dev->native.view.bpp    = dlo_mode_data[num].bpp;
-          dev->native.refresh     = dlo_mode_data[num].refresh;
-          DPRINTF("mode: lookup: native mode %u (%ux%u @ %u bpp, %uHz base &%X)\n",
-                  num,
-                  dev->native.view.width,
-                  dev->native.view.height,
-                  dev->native.view.bpp,
-                  dev->native.refresh,
-                  (int)dev->native.view.base);
-        }
-      }
-    }
   }
 
   /* Fill any remaining array entries with the invalid mode constant */
@@ -810,6 +809,7 @@ static dlo_retcode_t set_base(dlo_device_t * const dev, const dlo_ptr_t base, co
   ERR(vreg(dev, 0x28, base8));
   ERR(vbuf(dev, WRITE_VIDREG_UNLOCK, DSIZEOF(WRITE_VIDREG_UNLOCK)));
   ERR(dlo_usb_write(dev));
+  //DPRINTF("mode: set_base complete\n");
 
   return dlo_ok;
 }
@@ -826,75 +826,48 @@ static bool bad_edid_checksum(const uint8_t * const ptr, const size_t size)
   return 0 != csum;
 }
 
-
-static void parse_edid_detail_desc(edid_timing_desc_t * const desc, const uint8_t * const ptr)
+static dlo_retcode_t unpack_edid_detailed_timing(edid_detail_unpacked_t * const monitor, const uint8_t * const ptr)
 {
-  if (RD_B(ptr) || RD_B(ptr + 1) || RD_B(ptr + 2))
-  {
-    //DPRINTF("edid: found timing detail (&%04X)\n", LETOHS(RD_S(ptr)));
-    desc->detail.is_detail       = true;
-    desc->detail.pixclk          = (float)LETOHS(RD_S(ptr)) / 100.0;
-    desc->detail.hactl           = RD_B(ptr + 0x02);
-    desc->detail.hblankl         = RD_B(ptr + 0x03);
-    desc->detail.hactblankh      = RD_B(ptr + 0x04);
-    desc->detail.vactl           = RD_B(ptr + 0x05);
-    desc->detail.vblankl         = RD_B(ptr + 0x06);
-    desc->detail.vactblankh      = RD_B(ptr + 0x07);
-    desc->detail.hsyncoffl       = RD_B(ptr + 0x08);
-    desc->detail.hsyncwl         = RD_B(ptr + 0x09);
-    desc->detail.vsyncoffvsyncwl = RD_B(ptr + 0x0A);
-    desc->detail.synch           = RD_B(ptr + 0x0B);
-    desc->detail.hsizel          = RD_B(ptr + 0x0C);
-    desc->detail.vsizel          = RD_B(ptr + 0x0D);
-    desc->detail.hvsizeh         = RD_B(ptr + 0x0E);
-    desc->detail.hbord           = RD_B(ptr + 0x0F);
-    desc->detail.vbord           = RD_B(ptr + 0x10);
-    desc->detail.flags           = RD_B(ptr + 0x11);
+  monitor->pixelClock10KHz = LETOHS(RD_S(ptr));
+  if (monitor->pixelClock10KHz == 0)
+    return dlo_warn_no_edid_detailed_timing;
 
-    //DPRINTF("edid: Pixel Clock:     %f MHz\n", (float)desc->detail.pixclk);
-    //DPRINTF("edid: H Active pixels: %d\n",     desc->detail.hactl + ((desc->detail.hactblankh & 0xF0) << 4));
-    //DPRINTF("edid: H Blank pixels:  %d\n",     desc->detail.hblankl + ((desc->detail.hactblankh & 0x0F) << 8));
-    //DPRINTF("edid: V Active pixels: %d\n",     desc->detail.vactl + ((desc->detail.vactblankh & 0xF0) << 4));
-    //DPRINTF("edid: V Blank pixels:  %d\n",     desc->detail.vblankl + ((desc->detail.vactblankh & 0x0F) << 8));
-    //DPRINTF("edid: H Sync Off:      %d\n",     desc->detail.hsyncoffl + ((desc->detail.synch & 0xC0) << 2));
-    //DPRINTF("edid: H Sync Width:    %d\n",     desc->detail.hsyncwl + ((desc->detail.synch & 0x30) << 4));
-    //DPRINTF("edid: V Sync Off:      %d\n",     (desc->detail.vsyncoffvsyncwl >> 4) + ((desc->detail.synch & 0x0C) << 6));
-    //DPRINTF("edid: V Sync Width:    %d\n",     (desc->detail.vsyncoffvsyncwl & 0xF) + ((desc->detail.synch & 0x03) << 8));
-    //DPRINTF("edid: H size:          %d mm\n",  desc->detail.hsizel + ((desc->detail.hvsizeh & 0xF0) << 4));
-    //DPRINTF("edid: V size:          %d mm\n",  desc->detail.vsizel + ((desc->detail.hvsizeh & 0x0F) << 8));
-  }
-  else
-  {
-    /* It's a mode descriptor - ignore for now */
-    //DPRINTF("edid: found a mode descriptor type &%02X\n", RD_B(ptr+3));
-    desc->desc.is_detail = false;
-    switch (RD_B(ptr+3))
-    {
-      case 0xFC:
-      case 0xFE:
-      case 0xFF:
-      {
-        char  buf[14];
-        char *chr;
+  monitor->hActive         = ptr[0x02] + ((ptr[0x04] & 0xF0) << 4);
+  monitor->hBlanking       = ptr[0x03] + ((ptr[0x04] & 0x0F) << 8);
+  monitor->vActive         = ptr[0x05] + ((ptr[0x07] & 0xF0) << 4);
+  monitor->vBlanking       = ptr[0x06] + ((ptr[0x07] & 0x0F) << 8);
+  monitor->hSyncOffset     = ptr[0x08] + ((ptr[0x0B] & 0xC0) << 2);
+  monitor->hSyncPulseWidth = ptr[0x09] + ((ptr[0x0B] & 0x30) << 4);
+  monitor->vSyncOffset     = (ptr[0x0A] >> 4) + ((ptr[0x0B] & 0x0C) << 6);
+  monitor->vSyncPulseWidth = (ptr[0x0A] & 0x0F) + ((ptr[0x0B] & 0x03) << 8);
+  monitor->hImageSizeMm    = ptr[0x0C] + ((ptr[0x0E] & 0xF0) << 4);
+  monitor->vImageSizeMm    = ptr[0x0D] + ((ptr[0x0E] & 0x0F) << 8);
+  monitor->hBorder         = ptr[0x0F];
+  monitor->vBorder         = ptr[0x10];
+  monitor->bInterlaced     = (ptr[0x11] & 0x80) ? 1 : 0;
+  monitor->bStereo         = (ptr[0x11] & 0x60) ? 1 : 0;
+  monitor->bSeparateSync   = (ptr[0x11] & 0x18) ? 1 : 0;
+  monitor->bVSyncPositive  = (ptr[0x11] & 0x04) ? 1 : 0;
+  monitor->bHSyncPositive  = (ptr[0x11] & 0x02) ? 1 : 0;
+  monitor->bStereoMode     = (ptr[0x11] & 0x01) ? 1 : 0;
 
-        snprintf(buf, 13, "%s", ptr + 5);
-        buf[13] = '\0';
-        chr = strchr(buf, '\n');
-        if (chr)
-          *chr = '\0';
-        //DPRINTF("edid: monitor string '%s'\n", buf);
-        break;
-      }
-      default:
-      {
-        //uint32_t i;
-        //DPRINTF("edid: ");
-        //for (i = 0; i < 0x12; i++)
-        //  DPRINTF("%02X ", RD_B(ptr+i));
-        //DPRINTF("\n");
-      }
-    }
-  }
+  DPRINTF("edid: Pixel Clock:     %u KHz\n", monitor->pixelClock10KHz * 10);
+  DPRINTF("edid: H Active pixels: %u\n", monitor->hActive);
+  DPRINTF("edid: H Blank pixels:  %u\n", monitor->hBlanking);
+  DPRINTF("edid: V Active pixels: %u\n", monitor->vActive);
+  DPRINTF("edid: V Blank pixels:  %u\n", monitor->vBlanking);
+  DPRINTF("edid: H Sync Offset:   %u\n", monitor->hSyncOffset);
+  DPRINTF("edid: H Sync Width:    %u\n", monitor->hSyncPulseWidth);
+  DPRINTF("edid: V Sync Offset:   %u\n", monitor->vSyncOffset);
+  DPRINTF("edid: V Sync Width:    %u\n", monitor->vSyncPulseWidth);
+  DPRINTF("edid: H size:          %u mm\n", monitor->hImageSizeMm);
+  DPRINTF("edid: V size:          %u mm\n", monitor->vImageSizeMm);
+  DPRINTF("edid: H Border         %u\n", monitor->hBorder);
+  DPRINTF("edid: V Border         %u\n", monitor->vBorder);
+  DPRINTF("edid: interlaced %u stereo %u separateSync %u\n", monitor->bInterlaced, monitor->bStereo, monitor->bSeparateSync);
+  DPRINTF("edid: bVSyncPositive %u bHSyncPositive %u bStereoMode %u\n", monitor->bVSyncPositive, monitor->bHSyncPositive, monitor->bStereoMode);
+  
+  return dlo_ok;
 }
 
 static void parse_edid_colours(edid_colours_t * const cols, const uint8_t * const ptr)

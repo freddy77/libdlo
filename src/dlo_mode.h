@@ -101,6 +101,24 @@ extern dlo_modenum_t dlo_mode_lookup(dlo_device_t * const dev, const uint16_t wi
  */
 extern dlo_retcode_t dlo_mode_change(dlo_device_t * const dev, const dlo_mode_t * const desc, dlo_modenum_t mode);
 
+/** Set the mode of a DisplayLink chip 
+ *  to the monitor's preferred mode,
+ *  using the EDID detailed timing descriptor
+ *  Returns error if EDID detailed timing is not available
+ *
+ *  @param  dev   Pointer to @a dlo_device_t structure.
+ *  @param  base  Base address of view in framebuffer. Can be zero.
+ *
+ *  @return  Return code, zero for no error.
+ *
+ *  Since this data originates from EDID, it is assumed that the 
+ *  monitor will support the mode. So the only checks will be if
+ *  the DisplayLink chip supports it, too.
+ * 
+ *  Note: Chaging mode does not imply clearing the screen.
+ *  Note: this call will cause any buffered commands to be sent to the device.
+ */
+extern dlo_retcode_t dlo_mode_set_default(dlo_device_t * const dev, uint32_t base);
 
 /** Parse the EDID structure read from a display device and build a list of supported modes.
  *

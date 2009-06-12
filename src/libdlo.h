@@ -246,6 +246,7 @@ typedef enum
   dlo_err_usb,               /**< A USB-related error: call @c dlo_usb_strerror() for further info. */
   /* Warnings... */
   dlo_warn_dl160_mode = 0x10000000u, /**< This screen mode may not display correctly on DL120 devices. */
+  dlo_warn_no_edid_detailed_timing,  /**< EDID descriptor not detailed timing */
   /* User return codes... */
   dlo_user_example = 0x80000000      /**< Return codes 0x80000000 to 0xFFFFFFFF are free for user allocation. */
 } dlo_retcode_t;             /**< Return codes. Used to indicate the success or otherwise of a call to the library. */
@@ -693,13 +694,13 @@ extern dlo_devinfo_t *dlo_device_info(const dlo_dev_t uid);
  *  then the supported mode list will be derived from the EDID information).
  *
  *  The @a mode parameter describes the desired mode parameters, some of which
- *  are optional and may be left as zero/NULL:
+ *  are optional and may be left as zero/NULL. The mode itself may be NULL.
  *
- *  @li width in pixels (always required)
- *  @li height in pixels (or zero to use first available of specified width)
+ *  @li width in pixels (or zero to use the best match against EDID)
+ *  @li height in pixels (or zero to use the best match against EDID)
  *  @li colour depth in bits per pixel (currently, only 24 is supported)
  *  @li base address in the device memory (of the origin of the mode's viewport)
- *  @li refresh rate, in Hz (or zero to select the first available)
+ *  @li refresh rate, in Hz (or zero to select the best match against EDID)
  *
  *  This call will not cause the screen area to be cleared to a 'background'
  *  colour.

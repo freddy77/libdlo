@@ -455,8 +455,7 @@ dlo_dev_t dlo_claim_device(const dlo_dev_t uid, const dlo_claim_t flags, const u
   ERR_GOTO(dlo_usb_std_chan(dev));
 
   /* Attempt to change mode into the native resolution of the display (if we have one) */
-  if (dev->native.view.width)
-    ERR_GOTO(dlo_mode_change(dev, &dev->native, DLO_INVALID_MODE));
+  dlo_mode_set_default(dev, 0);
 
   return uid;
 
@@ -597,6 +596,25 @@ dlo_retcode_t dlo_set_mode(const dlo_dev_t uid, const dlo_mode_t * const desc)
 
   if (!dev)
     return dlo_err_bad_device;
+
+  /* TODO: clean up the cases we use the direct-from-EDID path, when we 
+   * generally clean up (or is that clean out?) the standard mode tables
+   */
+  if ((desc == NULL) || (desc->view.width == 0) ||
+      /* or if width and hight the same as monitor's preferred mode */
+      ((dev->edid.timings[0].pixelClock10KHz) && (desc->view.width == dev->edid.timings[0].hActive) && (desc->view.height == dev->edid.timings[0].vActive))) {
+
+    uint32_t base = 0;
+
+    if (desc) {
+      base = desc->view.base;
+    }
+
+    /* Then do a modeset directly from the preferred mode in the EDID */
+    return dlo_mode_set_default(dev, base);
+  }
+
+  DPRINTF("dlo: set_mode: asking for width %u height %u refresh %u bpp %u\n", desc->view.width, desc->view.height, desc->refresh, desc->view.bpp);
 
   /* See if we can provide a mode which matches the required parameters */
   num = dlo_mode_lookup(dev, desc->view.width, desc->view.height, desc->refresh, desc->view.bpp);
