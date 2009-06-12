@@ -243,7 +243,7 @@ static dlo_retcode_t basic_grfx_test(const dlo_dev_t uid)
   dev_info = dlo_device_info(uid);
   NERR(dev_info);
   printf("test: device info: uid &%X\n", (int)dev_info->uid);
-  printf("test: device info: serial '%s'\n", dev_info->serial);
+  printf("test: device info: serial %s\n", dev_info->serial);
   printf("test: device info: type  &%X\n", (uint32_t)dev_info->type);
 
   /* Read current mode information (if we're already in the display's native mode) */
@@ -252,14 +252,9 @@ static dlo_retcode_t basic_grfx_test(const dlo_dev_t uid)
   printf("test: native mode info...\n");
   printf("  %ux%u @ %u Hz %u bpp base &%X\n", mode_info->view.width, mode_info->view.height, mode_info->refresh, mode_info->view.bpp, (int)mode_info->view.base);
 
-  /* Select a fairly standard mode */
+  /* Select the monitor's preferred mode, based on EDID */
   printf("test: set_mode...\n");
-  mode.view.width  = SCREEN_X;
-  mode.view.height = SCREEN_Y;
-  mode.view.bpp    = SCREEN_BPP;
-  mode.view.base   = 0;
-  mode.refresh     = SCREEN_RATE;
-  ERR(dlo_set_mode(uid, &mode));
+  ERR(dlo_set_mode(uid, NULL));
       
   /* Read current mode information */
   mode_info = dlo_get_mode(uid);
@@ -533,10 +528,21 @@ static bmp_t *load_bmp(const char * const bmpfile)
   long int      size;
   bmp_t        *bmp;
   FILE         *fp;
+  char         filename[255];
+  const char   dir1[] = "images/";
+  const char   images[] = "test/images/";
 
-  fp = fopen(bmpfile, "rb");
-  if (!fp)
-    return NULL;
+  strcpy(filename, "images/");
+  strncat(filename, bmpfile, sizeof(filename) - 8);
+  fp = fopen(filename, "rb");
+  if (!fp) {
+    strcpy(filename, "test/images/");
+    strncat(filename, bmpfile, sizeof(filename) - 14);
+    fp = fopen(filename, "rb");
+    if (!fp) {
+      return NULL;
+    }
+  }
 
   if (fseek(fp, 0, SEEK_END))
     return NULL;
@@ -770,16 +776,16 @@ error:
  */
 static dlo_retcode_t scrape_tests(const dlo_dev_t uid)
 {
-  ERR(bitmap_test(uid, false, "images/test08.bmp"));
+  ERR(bitmap_test(uid, false, "test08.bmp"));
 
   wait_ms(now(), 1000);
-  ERR(bitmap_test(uid, true, "images/test16.bmp"));
+  ERR(bitmap_test(uid, true, "test16.bmp"));
 
   wait_ms(now(), 1000);
-  ERR(bitmap_test(uid, false, "images/test24.bmp"));
+  ERR(bitmap_test(uid, false, "test24.bmp"));
 
   wait_ms(now(), 1000);
-  return bitmap_test(uid, true, "images/test32.bmp");
+  return bitmap_test(uid, true, "test32.bmp");
 }
 
 
@@ -824,7 +830,7 @@ static dlo_retcode_t bmp_clip_test(const dlo_dev_t uid)
   ERR(dlo_fill_rect(uid, &view[2], NULL, DLO_RGB(0, 0x50, 0)));
 
   /* Load the Windows BMP bitmap file into memory */
-  bmp = load_bmp("images/test08.bmp");
+  bmp = load_bmp("test08.bmp");
   NERR(bmp);
 
   /* Initialise a dlo_fbuf structure from our loaded bitmap file  */
