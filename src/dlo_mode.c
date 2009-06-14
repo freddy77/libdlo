@@ -566,19 +566,14 @@ static dlo_modenum_t get_mode_number(dlo_device_t * const dev, const uint16_t wi
  * (which is why it doesn't apply to all registers).  It's actually
  * for convenience on the hardware side, as the registers are used as counters
  */
-static uint32_t lfsr16(uint32_t v)
+static uint16_t lfsr16(uint16_t v)
 {
-  static uint32_t prev = 0;
-  static uint32_t _v   = 0xFFFF;
+  uint32_t _v   = 0xFFFF;
 
-  if (v != prev)
-  {
-    _v = 0xFFFF;
-    while (v--)
-      _v = ((_v << 1) | (((_v >> 15) ^ (_v >> 4) ^ (_v >> 2) ^ (_v >> 1)) & 1)) & 0xFFFF;
-    prev = v;
+  while (v--) {
+    _v = ((_v << 1) | (((_v >> 15) ^ (_v >> 4) ^ (_v >> 2) ^ (_v >> 1)) & 1)) & 0xFFFF;
   }
-  return _v;
+  return (uint16_t) _v;
 }
 
 inline dlo_retcode_t vreg_big_endian(dlo_device_t * const dev, uint8_t reg, uint16_t val){
