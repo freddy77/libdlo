@@ -451,9 +451,6 @@ dlo_dev_t dlo_claim_device(const dlo_dev_t uid, const dlo_claim_t flags, const u
   /* Any other errors from opening the connection get returned to the caller */
   ERR_GOTO(err);
 
-  /* Select the standard output channel */
-  ERR_GOTO(dlo_usb_std_chan(dev));
-
   /* Attempt to change mode into the native resolution of the display (if we have one) */
   dlo_mode_set_default(dev, 0);
 

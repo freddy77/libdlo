@@ -683,15 +683,20 @@ static dlo_retcode_t mode_set_from_edid(dlo_device_t * const dev, edid_detail_un
   if (base & 1)
     return dlo_err_bad_mode;
 
+  /* Select the standard output channel */
+  ERR(dlo_usb_std_chan(dev));
+
   dev->mode.view.base = base;
   dev->base8          = base + (BYTES_PER_16BPP * edid->hActive * edid->vActive);
   ERR(set_base(dev, dev->mode.view.base, dev->base8));
 
-  //ERR(dlo_usb_std_chan(dev));
   ERR(edid_to_vreg_commands(dev, edid, 24));
 
   /* Flush the command buffer */
   ERR(dlo_usb_write(dev));
+
+  /* Revert channel back ? */
+  ERR(dlo_usb_chan_sel(dev, DLO_MODE_POSTAMBLE, DSIZEOF(DLO_MODE_POSTAMBLE)));
 
   /* Update the device with the new mode details */
   dev->mode.view.width = edid->hActive;
