@@ -673,13 +673,16 @@ static dlo_retcode_t cmd_stripe24(dlo_device_t * const dev, dlo_ptr_t base16, dl
 {
   dlo_col16_t *ptr_col16 = stripe16;
   dlo_col8_t  *ptr_col8  = stripe8;
-  dlo_ptr_t    end       = base16 + (BYTES_PER_16BPP * width);
-  uint32_t     rem       = width;
+  dlo_ptr_t    end;
+  uint32_t     rem;
   uint32_t     pix;
 
   /* Flush the command buffer if it's getting full */
   if (dev->bufend - dev->bufptr < BUF_HIGH_WATER_MARK)
     ERR(dlo_usb_write(dev));
+
+  end = base16 + (BYTES_PER_16BPP * width);
+  rem = width;
 
   for (; base16 < end; base16 += BYTES_PER_16BPP * RAW_MAX_PIXELS)
   {
@@ -705,6 +708,7 @@ static dlo_retcode_t cmd_stripe24(dlo_device_t * const dev, dlo_ptr_t base16, dl
   }
 
   end = base8 + (BYTES_PER_8BPP * width);
+  rem = width;
 
   for (; base8 < end; base8 += BYTES_PER_8BPP * RAW_MAX_PIXELS)
   {
