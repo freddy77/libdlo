@@ -35,14 +35,10 @@
 /** Maximum number of pixels that will fit into the scrape buffer. */
 #define SCRAPE_MAX_PIXELS (2048)
 
+/** Return red/green/blue component of a 16 bpp colour number (565). */
+#define DLO_RGB16(red, grn, blu) (uint16_t)(((((red) & 0xF8) << 8) | (((grn) & 0xFC) << 3) | (((blu) >> 3))) & 0xFFFF)
 
-/** Return red/green component of a 16 bpp colour number. */
-#define DLO_RG16(red, grn) (uint8_t)((((red) & 0xF8) | ((grn) >> 5)) & 0xFF)
-
-/** Return green/blue component of a 16 bpp colour number. */
-#define DLO_GB16(grn, blu) (uint8_t)(((((grn) & 0x1C) << 3) | ((blu) >> 3)) & 0xFF)
-
-/** Return 8 bpp colour number from red, green and blue components. */
+/** Return 8 bpp colour number from red, green and blue components (323). */
 #define DLO_RGB8(red, grn, blu) ((((red) << 5) | (((grn) & 3) << 3) | ((blu) & 7)) & 0xFF)
 
 
@@ -823,7 +819,7 @@ static dlo_col16_t rgb16(dlo_col32_t col)
   uint8_t grn = DLO_RGB_GETGRN(col);
   uint8_t blu = DLO_RGB_GETBLU(col);
 
-  return (DLO_RG16(red, grn) << 8) + DLO_GB16(grn, blu);
+  return DLO_RGB16(red, grn, blu);
 }
 
 
