@@ -211,7 +211,7 @@ static dlo_col32_t *lut = lut8bpp;
  *
  *  @return  Return code, zero for no error.
  */
-static dlo_retcode_t hline_24bpp(dlo_device_t * const dev, dlo_ptr_t base16, dlo_ptr_t base8, const uint32_t len, const dlo_col32_t col);
+static dlo_retcode_t hline_24bpp(dlo_device_t * const dev, dlo_ptr_t base16, dlo_ptr_t base8, uint32_t len, const dlo_col32_t col);
 
 
 /** Copy a section of horizontal line from one location to another at 24 bpp.
@@ -225,7 +225,7 @@ static dlo_retcode_t hline_24bpp(dlo_device_t * const dev, dlo_ptr_t base16, dlo
  *
  *  @return  Return code, zero for no error.
  */
-static dlo_retcode_t copy_24bpp(dlo_device_t * const dev, dlo_ptr_t src_base16, dlo_ptr_t dest_base16, dlo_ptr_t src_base8, dlo_ptr_t dest_base8, const uint32_t len);
+static dlo_retcode_t copy_24bpp(dlo_device_t * const dev, dlo_ptr_t src_base16, dlo_ptr_t dest_base16, dlo_ptr_t src_base8, dlo_ptr_t dest_base8, uint32_t len);
 
 
 /** Scrape a horizontal line of host-resident pixels at 24 bpp into the device.
@@ -549,79 +549,54 @@ dlo_retcode_t dlo_grfx_copy_host_bmp(dlo_device_t * const dev, const dlo_bmpflag
 /* File-scope function definitions -----------------------------------------------------*/
 
 
-static dlo_retcode_t hline_24bpp(dlo_device_t * const dev, dlo_ptr_t base16, dlo_ptr_t base8, const uint32_t len, const dlo_col32_t col)
+static dlo_retcode_t hline_24bpp(dlo_device_t * const dev, dlo_ptr_t base16, dlo_ptr_t base8, uint32_t len, const dlo_col32_t col)
 {
   dlo_col16_t col16 = rgb16(col);
   dlo_col8_t  col8  = rgb8(col);
-  uint32_t    rem   = len % 256;
 
   /* Flush the command buffer if it's getting full */
   if (dev->bufend - dev->bufptr < BUF_HIGH_WATER_MARK)
     ERR(dlo_usb_write(dev));
 
-  /* Is this a short line segment? */
-  if (len < 256)
+  /* Longer line segments require a few commands to complete */
+  while (len >= 256)
+  {
+    ERR(cmd_hline16(dev, base16, 0, col16));
+    ERR(cmd_hline8( dev, base8,  0, col8));
+    base16 += BYTES_PER_16BPP * 256;
+    base8  += BYTES_PER_8BPP * 256;
+    len -= 256;
+  }
+  if (len)
   {
     ERR(cmd_hline16(dev, base16, len, col16));
     ERR(cmd_hline8( dev, base8,  len, col8));
-  }
-  else
-  {
-    /* Longer line segments require a few commands to complete */
-    uint32_t roff16 = base16 + (BYTES_PER_16BPP * (len - rem));
-    uint32_t roff8  = base8  + (BYTES_PER_8BPP  * (len - rem));
-
-    for (; base16 < roff16; base16 += BYTES_PER_16BPP * 256)
-    {
-      ERR(cmd_hline16(dev, base16, 0, col16));
-      ERR(cmd_hline8( dev, base8,  0, col8));
-      base8 += BYTES_PER_8BPP * 256;
-    }
-    if (rem)
-    {
-      ERR(cmd_hline16(dev, roff16, rem, col16));
-      ERR(cmd_hline8( dev, roff8,  rem, col8));
-    }
   }
   return dlo_ok;
 }
 
 
-static dlo_retcode_t copy_24bpp(dlo_device_t * const dev, dlo_ptr_t src_base16, dlo_ptr_t dest_base16, dlo_ptr_t src_base8, dlo_ptr_t dest_base8, const uint32_t len)
+static dlo_retcode_t copy_24bpp(dlo_device_t * const dev, dlo_ptr_t src_base16, dlo_ptr_t dest_base16, dlo_ptr_t src_base8, dlo_ptr_t dest_base8, uint32_t len)
 {
-  uint32_t rem = len % 256;
-
   /* Flush the command buffer if it's getting full */
   if (dev->bufend - dev->bufptr < BUF_HIGH_WATER_MARK)
     ERR(dlo_usb_write(dev));
 
-  /* Is this a short line segment? */
-  if (len < 256)
+  /* Longer line segments require a few commands to complete */
+  while (len >= 256)
+  {
+    ERR(cmd_copy16(dev, src_base16, 0, dest_base16));
+    ERR(cmd_copy8( dev, src_base8,  0, dest_base8));
+    src_base16  += BYTES_PER_16BPP * 256;
+    dest_base16 += BYTES_PER_16BPP * 256;
+    src_base8   += BYTES_PER_8BPP  * 256;
+    dest_base8  += BYTES_PER_8BPP  * 256;
+    len -= 256;
+  }
+  if (len)
   {
     ERR(cmd_copy16(dev, src_base16, len, dest_base16));
     ERR(cmd_copy8( dev, src_base8,  len, dest_base8));
-  }
-  else
-  {
-    /* Longer line segments require a few commands to complete */
-    uint32_t src_roff16  = src_base16  + (BYTES_PER_16BPP * (len - rem));
-    uint32_t dest_roff16 = dest_base16 + (BYTES_PER_16BPP * (len - rem));
-    uint32_t src_roff8   = src_base8   + (BYTES_PER_8BPP  * (len - rem));
-    uint32_t dest_roff8  = dest_base8  + (BYTES_PER_8BPP  * (len - rem));
-
-    for (; src_base16 < src_roff16; src_base16 += BYTES_PER_16BPP * 256)
-    {
-      ERR(cmd_copy16(dev, src_base16, 0, dest_base16));
-      ERR(cmd_copy8( dev, src_base8,  0, dest_base8));
-      dest_base16 += BYTES_PER_16BPP * 256;
-      src_base8   += BYTES_PER_8BPP  * 256;
-      dest_base8  += BYTES_PER_8BPP  * 256;
-    }
-    if (rem)
-    {
-      ERR(cmd_copy16(dev, src_roff16, rem, dest_roff16));
-      ERR(cmd_copy8( dev, src_roff8,  rem, dest_roff8));
-    }
   }
   return dlo_ok;
 }
