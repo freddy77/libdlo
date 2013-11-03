@@ -35,8 +35,6 @@
 /** Maximum number of pixels that will fit into the scrape buffer. */
 #define SCRAPE_MAX_PIXELS (2048)
 
-/** Simple wrapper around the @c dlo_free() call to first check the pointer and zero it after the free. */
-#define FREE(ptr) { if (ptr) { dlo_free(ptr); ptr = NULL; } }
 
 /** Return red/green component of a 16 bpp colour number. */
 #define DLO_RG16(red, grn) (uint8_t)((((red) & 0xF8) | ((grn) >> 5)) & 0xFF)
@@ -201,16 +199,6 @@ static dlo_col32_t lut8bpp[256];
 static dlo_col32_t *lut = lut8bpp;
 
 
-/** Pointer to an array for storing a stripe of 16bpp pixel information.
- */
-static dlo_col16_t *stripe16 = NULL;
-
-
-/** Pointer to an array for storing a stripe of 8bpp pixel information.
- */
-static dlo_col8_t  *stripe8  = NULL;
-
-
 /* External-scope variables ------------------------------------------------------------*/
 
 
@@ -270,7 +258,8 @@ static dlo_retcode_t scrape_24bpp(dlo_device_t * const dev, const read_pixel_t r
  *
  *  @return  Return code, zero for no error.
  */
-static dlo_retcode_t cmd_stripe24(dlo_device_t * const dev, dlo_ptr_t base16, dlo_ptr_t base8, const uint32_t width);
+static dlo_retcode_t cmd_stripe24(dlo_device_t * const dev, dlo_ptr_t base16, dlo_ptr_t base8, const uint32_t width,
+                                  const dlo_col16_t *ptr_col16, const dlo_col8_t *ptr_col8);
 
 
 /** Given a 32 bpp colour number, return an 8 bpp colour number.
@@ -360,11 +349,6 @@ dlo_retcode_t dlo_grfx_init(const dlo_init_t flags)
   uint8_t  red, grn, blu;
   uint8_t  red8, grn8, blu8;
 
-  stripe16 = malloc(SCRAPE_MAX_PIXELS * sizeof(dlo_col16_t));
-  NERR(stripe16);
-  stripe8  = malloc(SCRAPE_MAX_PIXELS * sizeof(dlo_col8_t));
-  NERR(stripe8);
-
   /* Initialise the default look-up table for 8 bpp in bgr323 format */
   for (red = 0; red < 8; red++)
   for (grn = 0; grn < 4; grn++)
@@ -398,9 +382,6 @@ dlo_retcode_t dlo_grfx_init(const dlo_init_t flags)
 
 dlo_retcode_t dlo_grfx_final(const dlo_final_t flags)
 {
-  FREE(stripe16);
-  FREE(stripe8);
-
   return dlo_ok;
 }
 
@@ -654,6 +635,9 @@ static dlo_retcode_t scrape_24bpp(dlo_device_t * const dev, const read_pixel_t r
                                    const uint8_t *src_base, dlo_ptr_t dest_base16, dlo_ptr_t dest_base8, const uint32_t width)
 {
   const uint8_t *end       = src_base + (bypp * width);
+  dlo_col16_t  stripe16[SCRAPE_MAX_PIXELS];
+  dlo_col8_t   stripe8 [SCRAPE_MAX_PIXELS];
+
   dlo_col16_t   *ptr_col16 = stripe16;
   dlo_col8_t    *ptr_col8  = stripe8;
 
@@ -665,14 +649,13 @@ static dlo_retcode_t scrape_24bpp(dlo_device_t * const dev, const read_pixel_t r
     *ptr_col16++ = rgb16(col);
     *ptr_col8++  = rgb8(col);
   }
-  return cmd_stripe24(dev, dest_base16, dest_base8, width);
+  return cmd_stripe24(dev, dest_base16, dest_base8, width, stripe16, stripe8);
 }
 
 
-static dlo_retcode_t cmd_stripe24(dlo_device_t * const dev, dlo_ptr_t base16, dlo_ptr_t base8, const uint32_t width)
+static dlo_retcode_t cmd_stripe24(dlo_device_t * const dev, dlo_ptr_t base16, dlo_ptr_t base8, const uint32_t width,
+                                  const dlo_col16_t *ptr_col16, const dlo_col8_t *ptr_col8)
 {
-  dlo_col16_t *ptr_col16 = stripe16;
-  dlo_col8_t  *ptr_col8  = stripe8;
   dlo_ptr_t    end;
   uint32_t     rem;
   uint32_t     pix;
